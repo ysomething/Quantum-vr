@@ -52,6 +52,11 @@ export function createCalibrationHelpers({ anchorGroup, modelRoot, targetAspect 
   axes.position.z = 0.03;
   anchorHelpers.add(axes);
 
+  const modelBox = new THREE.BoxHelper(modelRoot, 0xffd166);
+  modelBox.name = 'model_bounding_box_helper';
+  modelBox.visible = false;
+  anchorGroup.add(modelBox);
+
   const modelHelpers = new THREE.Group();
   modelHelpers.name = 'ar_model_calibration_helpers';
   modelHelpers.visible = false;
@@ -84,11 +89,18 @@ export function createCalibrationHelpers({ anchorGroup, modelRoot, targetAspect 
   function setVisible(visible) {
     anchorHelpers.visible = visible;
     modelHelpers.visible = visible;
+    modelBox.visible = visible;
+    if (visible) modelBox.update();
+  }
+
+  function update() {
+    if (modelBox.visible) modelBox.update();
   }
 
   function dispose() {
     setVisible(false);
     anchorGroup.remove(anchorHelpers);
+    anchorGroup.remove(modelBox);
     modelRoot.remove(modelHelpers);
     anchorHelpers.traverse((object) => {
       object.geometry?.dispose?.();
@@ -98,7 +110,9 @@ export function createCalibrationHelpers({ anchorGroup, modelRoot, targetAspect 
       object.geometry?.dispose?.();
       object.material?.dispose?.();
     });
+    modelBox.geometry?.dispose?.();
+    modelBox.material?.dispose?.();
   }
 
-  return { anchorHelpers, modelHelpers, setVisible, dispose };
+  return { anchorHelpers, modelHelpers, modelBox, setVisible, update, dispose };
 }

@@ -45,9 +45,16 @@ export function createHotspots({ camera, anchors, layer, card, closeButton }) {
   const markers = [];
   const projected = new THREE.Vector3();
   const world = new THREE.Vector3();
+  const labelOffset = new THREE.Vector3();
   let activeId = null;
   let enabled = true;
   let autoCloseTimer = null;
+  let labelTransformEnabled = false;
+  let labelConfig = {
+    showLabels: true,
+    labelScale: 1,
+    labelOffset: { x: 0, y: 0, z: 0 },
+  };
 
   function clearAutoClose() {
     window.clearTimeout(autoCloseTimer);
@@ -115,6 +122,7 @@ export function createHotspots({ camera, anchors, layer, card, closeButton }) {
     for (const marker of markers) {
       marker.anchor.getWorldPosition(world);
       world.add(marker.offset);
+      world.add(labelOffset);
       projected.copy(world).project(camera);
       const behindCamera = projected.z < -1 || projected.z > 1;
       const outside = Math.abs(projected.x) > 1.12 || Math.abs(projected.y) > 1.12;
@@ -127,13 +135,37 @@ export function createHotspots({ camera, anchors, layer, card, closeButton }) {
       marker.element.style.left = `${x}px`;
       marker.element.style.top = `${THREE.MathUtils.clamp(y, 72, window.innerHeight - 90)}px`;
       marker.element.style.zIndex = String(Math.round((1 - projected.z) * 10) + 4);
+      if (labelTransformEnabled) {
+        marker.element.style.transform = `scale(${labelConfig.labelScale || 1})`;
+      }
     }
   }
 
   function setEnabled(value) {
-    enabled = value;
-    layer.hidden = !value;
-    if (!value) close();
+    enabled = value && labelConfig.showLabels !== false;
+    layer.hidden = !enabled;
+    if (!enabled) close();
+  }
+
+  function setLabelConfig(config = {}) {
+    labelTransformEnabled = true;
+    labelConfig = {
+      ...labelConfig,
+      ...config,
+      labelOffset: {
+        ...labelConfig.labelOffset,
+        ...(config.labelOffset || {}),
+      },
+    };
+    labelOffset.set(
+      labelConfig.labelOffset.x || 0,
+      labelConfig.labelOffset.y || 0,
+      labelConfig.labelOffset.z || 0,
+    );
+    for (const marker of markers) {
+      marker.element.style.transform = `scale(${labelConfig.labelScale || 1})`;
+    }
+    if (labelConfig.showLabels === false) setEnabled(false);
   }
 
   function focus(id) {
@@ -162,6 +194,7 @@ export function createHotspots({ camera, anchors, layer, card, closeButton }) {
     open: focus,
     close,
     setEnabled,
+    setLabelConfig,
     getTargets,
     get count() {
       return markers.length;

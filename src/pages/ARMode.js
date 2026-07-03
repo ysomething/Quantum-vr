@@ -106,7 +106,7 @@ function renderShell() {
         </div>
         <div class="ar-topbar__actions">
           <button class="secondary-button compact-button" type="button" data-low-brightness aria-pressed="false">低亮度模式</button>
-          <button class="secondary-button compact-button" type="button" data-calibration aria-pressed="false">校准</button>
+          <button class="secondary-button compact-button" type="button" data-calibration aria-pressed="false">校准模式</button>
           <button class="secondary-button compact-button" type="button" data-help>帮助</button>
         </div>
         <button class="mobile-icon-button ar-mobile-menu-button" type="button" data-ar-menu aria-expanded="false" aria-label="打开 AR 操作菜单">☰</button>
@@ -130,7 +130,7 @@ function renderShell() {
         <div class="mobile-drawer__grid">
           <button type="button" data-ar-menu-rescan>重新扫描</button>
           <button type="button" data-ar-menu-target>查看识别图</button>
-          <button type="button" data-ar-menu-calibration>校准</button>
+          <button type="button" data-ar-menu-calibration>校准模式</button>
           <button type="button" data-ar-menu-help>帮助</button>
           <button type="button" data-ar-menu-home>返回首页</button>
         </div>
@@ -413,6 +413,67 @@ function hasSavedLowBrightnessPreference() {
   }
 }
 
+function materialsFor(object) {
+  if (!object?.material) return [];
+  return Array.isArray(object.material) ? object.material.filter(Boolean) : [object.material];
+}
+
+function createARLabelController(modelRoot) {
+  const entries = [];
+
+  modelRoot?.traverse?.((object) => {
+    const name = String(object.name || '').toLowerCase();
+    if (!object.isObject3D || !/(^|[_-])(label|text)([_-]|$)|label_|_label|text_/.test(name)) return;
+    if (object.userData?.isCalibrationHelper) return;
+
+    const materials = materialsFor(object).map((material) => ({
+      material,
+      opacity: material.opacity ?? 1,
+      transparent: material.transparent,
+    }));
+
+    entries.push({
+      object,
+      baseVisible: object.visible,
+      basePosition: object.position.clone(),
+      baseScale: object.scale.clone(),
+      materials,
+    });
+  });
+
+  function apply(labels = AR_CONFIG.labels) {
+    const showLabels = labels.showLabels !== false;
+    const scale = Number(labels.labelScale ?? 1) || 1;
+    const offset = labels.labelOffset || {};
+
+    for (const entry of entries) {
+      entry.object.visible = entry.baseVisible && showLabels;
+      entry.object.position.set(
+        entry.basePosition.x + (Number(offset.x) || 0),
+        entry.basePosition.y + (Number(offset.y) || 0),
+        entry.basePosition.z + (Number(offset.z) || 0),
+      );
+      entry.object.scale.set(
+        entry.baseScale.x * scale,
+        entry.baseScale.y * scale,
+        entry.baseScale.z * scale,
+      );
+      for (const materialEntry of entry.materials) {
+        materialEntry.material.transparent = materialEntry.transparent || scale !== 1 || showLabels === false;
+        if ('opacity' in materialEntry.material) {
+          materialEntry.material.opacity = showLabels ? materialEntry.opacity : 0;
+        }
+        materialEntry.material.needsUpdate = true;
+      }
+    }
+  }
+
+  return {
+    count: entries.length,
+    apply,
+  };
+}
+
 export async function mount(app, { navigate }) {
   const page = renderShell();
   app.append(page);
@@ -427,6 +488,7 @@ export async function mount(app, { navigate }) {
   let model = null;
   let effects = null;
   let hotspots = null;
+  let labelController = null;
   let performanceMonitor = null;
   let calibrationHelpers = null;
   let calibrationUi = null;
@@ -438,8 +500,12 @@ export async function mount(app, { navigate }) {
     session?.applyVisualConfig(runtimeConfig.visual);
     model?.applyModelConfig(runtimeConfig.model);
     model?.applyVisualConfig(runtimeConfig.visual);
+    labelController?.apply(runtimeConfig.labels);
+    hotspots?.setLabelConfig?.(runtimeConfig.labels);
+    hotspots?.setEnabled(Boolean(targetVisible && runtimeConfig.labels?.showLabels !== false));
     effects?.applyVisualConfig(runtimeConfig.visual);
     effects?.setLowBrightnessMode(lowBrightnessMode);
+    calibrationHelpers?.update?.();
   }
 
   function setLowBrightnessMode(enabled, notify = true) {
@@ -463,6 +529,7 @@ export async function mount(app, { navigate }) {
     calibrationHelpers = null;
     hotspots?.dispose?.();
     hotspots = null;
+    labelController = null;
     if (session) {
       try {
         await session.stop();
@@ -488,7 +555,7 @@ export async function mount(app, { navigate }) {
       model?.triggerGlow(1.0);
       effects?.setTargetVisible(true);
       effects?.triggerFound(performance.now() / 1000);
-      hotspots?.setEnabled(true);
+      hotspots?.setEnabled(runtimeConfig.labels?.showLabels !== false);
       calibrationHelpers?.setVisible(calibrationUi?.isOpen() ?? false);
       hideLoading(page);
       setState(page, 'found');
@@ -572,6 +639,8 @@ export async function mount(app, { navigate }) {
       model = await modelPromise;
       model.applyModelConfig(runtimeConfig.model);
       model.applyVisualConfig(runtimeConfig.visual);
+      labelController = createARLabelController(model.root);
+      labelController.apply(runtimeConfig.labels);
       model.setVisible(false);
       session.content.add(model.root);
       session.content.visible = false;
@@ -606,6 +675,7 @@ export async function mount(app, { navigate }) {
         card: by(page, '#hotspot-card'),
         closeButton: by(page, '#hotspot-close'),
       });
+      hotspots.setLabelConfig?.(runtimeConfig.labels);
       hotspots.setEnabled(false);
 
       performanceMonitor = createARPerformanceMonitor({
@@ -620,6 +690,7 @@ export async function mount(app, { navigate }) {
         model?.update(delta);
         effects?.update(delta, elapsed);
         hotspots?.update(delta);
+        calibrationHelpers?.update?.();
         performanceMonitor?.update(delta);
       });
 
@@ -655,6 +726,8 @@ export async function mount(app, { navigate }) {
     initialConfig: runtimeConfig,
     initialLowBrightness: lowBrightnessMode,
     onToggle(open) {
+      page.classList.toggle('is-ar-calibrating', open);
+      if (open) closeArDrawer();
       calibrationHelpers?.setVisible(open && targetVisible);
     },
     onChange(nextConfig) {
@@ -746,6 +819,7 @@ export async function mount(app, { navigate }) {
     calibrationUi?.dispose();
     page.remove();
     document.body.classList.remove('is-ar-running', 'is-low-brightness');
+    page.classList.remove('is-ar-calibrating');
     stopCameraStream(document);
   });
 

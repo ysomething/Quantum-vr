@@ -1,3 +1,13 @@
+import {
+  AR_CALIBRATION_STORAGE_KEY,
+  applyCalibrationToARConfig,
+  clearStoredCalibrationConfig,
+  formatCalibrationJson,
+  loadStoredCalibrationConfig,
+  runtimeToCalibrationConfig,
+  saveStoredCalibrationConfig,
+} from '../../config/arCalibrationConfig.js';
+
 export const AR_CONFIG = {
   assets: {
     imageTargetSrc: `${import.meta.env.BASE_URL}targets/target.mind`,
@@ -9,7 +19,6 @@ export const AR_CONFIG = {
   model: {
     scale: 0.058,
     position: { x: 0, y: -0.04, z: 0.14 },
-    // 平放到 MindAR 识别图平面：保留当前尺寸，只去掉 45° 展示倾角。
     rotation: { x: Math.PI / 2, y: 0, z: Math.PI / 2 },
   },
   visual: {
@@ -52,17 +61,23 @@ export const AR_CONFIG = {
     textScale: 0.6,
     textPosition: { x: 0.22, y: -0.28, z: 0.38 },
   },
+  labels: {
+    showLabels: true,
+    labelScale: 1,
+    labelOffset: { x: 0, y: 0, z: 0 },
+  },
   calibration: {
-    storageKey: 'quantum-showcase-ar-config-v5',
+    storageKey: AR_CALIBRATION_STORAGE_KEY,
+    legacyStorageKey: 'quantum-showcase-ar-config-v5',
     lowBrightnessKey: 'quantum-showcase-ar-low-brightness-v1',
   },
 };
 
 const clampRanges = {
-  'model.scale': [0.025, 0.28],
-  'model.position.x': [-0.6, 0.6],
-  'model.position.y': [-0.6, 0.6],
-  'model.position.z': [-0.2, 0.7],
+  'model.scale': [0.05, 2],
+  'model.position.x': [-2, 2],
+  'model.position.y': [-2, 2],
+  'model.position.z': [-2, 2],
   'model.rotation.x': [-Math.PI * 2, Math.PI * 2],
   'model.rotation.y': [-Math.PI * 2, Math.PI * 2],
   'model.rotation.z': [-Math.PI * 2, Math.PI * 2],
@@ -78,6 +93,18 @@ const clampRanges = {
   'visual.bboPulseOpacity': [0.02, 0.24],
   'visual.bboAuraOpacity': [0, 0.18],
   'visual.targetFlashOpacity': [0, 0.18],
+  'visual.laserBeamIntensity': [0, 2],
+  'visual.laserBeamGlowOpacity': [0, 1],
+  'visual.laserEmitterIntensity': [0, 2],
+  'visual.laserEmitterGlowOpacity': [0, 1],
+  'visual.laserEmitterApertureIntensity': [0, 2],
+  'visual.laserEmitterApertureGlowOpacity': [0, 1],
+  'visual.bboIntensity': [0, 2],
+  'visual.bboGlowOpacity': [0, 1],
+  'visual.photonPathIntensity': [0, 2],
+  'visual.photonPathGlowOpacity': [0, 1],
+  'visual.photonTrailOpacity': [0, 1],
+  'visual.detectorGlowIntensity': [0, 2],
 };
 
 function canUseStorage() {
@@ -114,6 +141,17 @@ function clampValue(path, value) {
   return Math.min(range[1], Math.max(range[0], numeric));
 }
 
+function mergeLabels(baseLabels = AR_CONFIG.labels, overrideLabels = {}) {
+  return {
+    ...baseLabels,
+    ...overrideLabels,
+    labelOffset: {
+      ...(baseLabels?.labelOffset || {}),
+      ...(overrideLabels?.labelOffset || {}),
+    },
+  };
+}
+
 export function mergeARConfig(baseConfig = AR_CONFIG, override = {}) {
   const merged = clone(baseConfig);
 
@@ -131,6 +169,17 @@ export function mergeARConfig(baseConfig = AR_CONFIG, override = {}) {
     }
   }
 
+  if (isPlainObject(override.labels)) {
+    merged.labels = mergeLabels(merged.labels, override.labels);
+  }
+
+  if (isPlainObject(override.calibration)) {
+    merged.calibration = {
+      ...(merged.calibration || {}),
+      ...override.calibration,
+    };
+  }
+
   return merged;
 }
 
@@ -141,8 +190,11 @@ export function cloneARConfig(config = AR_CONFIG) {
 export function loadSavedARConfig() {
   if (!canUseStorage()) return null;
   try {
-    const raw = window.localStorage.getItem(AR_CONFIG.calibration.storageKey);
-    return raw ? JSON.parse(raw) : null;
+    const calibration = loadStoredCalibrationConfig();
+    if (calibration) return applyCalibrationToARConfig(AR_CONFIG, calibration);
+
+    const legacyRaw = window.localStorage.getItem(AR_CONFIG.calibration.legacyStorageKey);
+    return legacyRaw ? JSON.parse(legacyRaw) : null;
   } catch (error) {
     console.warn('Failed to read AR calibration config.', error);
     return null;
@@ -156,16 +208,20 @@ export function createRuntimeARConfig() {
 export function saveARConfig(config) {
   if (!canUseStorage()) return false;
   const clean = mergeARConfig(AR_CONFIG, config);
-  window.localStorage.setItem(AR_CONFIG.calibration.storageKey, JSON.stringify({
+  const calibration = runtimeToCalibrationConfig(clean);
+  saveStoredCalibrationConfig(calibration);
+  window.localStorage.setItem(AR_CONFIG.calibration.legacyStorageKey, JSON.stringify({
     model: clean.model,
     visual: clean.visual,
+    labels: clean.labels,
   }));
   return true;
 }
 
 export function resetSavedARConfig() {
   if (!canUseStorage()) return;
-  window.localStorage.removeItem(AR_CONFIG.calibration.storageKey);
+  clearStoredCalibrationConfig();
+  window.localStorage.removeItem(AR_CONFIG.calibration.legacyStorageKey);
 }
 
 export function loadLowBrightnessMode() {
@@ -180,5 +236,5 @@ export function saveLowBrightnessMode(enabled) {
 
 export function formatConfigForSource(config) {
   const clean = mergeARConfig(AR_CONFIG, config);
-  return `export const AR_CONFIG = ${JSON.stringify(clean, null, 2)}\n`;
+  return `${formatCalibrationJson(runtimeToCalibrationConfig(clean))}\n`;
 }

@@ -1,18 +1,49 @@
-import { AR_CONFIG, formatConfigForSource } from './arConfig.js';
+import { AR_CONFIG } from './arConfig.js';
+import {
+  DEFAULT_AR_CALIBRATION,
+  applyCalibrationToARConfig,
+  formatCalibrationJson,
+  normalizeCalibrationConfig,
+  runtimeToCalibrationConfig,
+} from '../../config/arCalibrationConfig.js';
 
-const CONTROLS = [
-  { path: 'model.scale', label: 'scale 缩放', min: 0.03, max: 0.18, step: 0.001 },
-  { path: 'model.position.x', label: 'position.x 左右', min: -0.35, max: 0.35, step: 0.005 },
-  { path: 'model.position.y', label: 'position.y 上下', min: -0.35, max: 0.35, step: 0.005 },
-  { path: 'model.position.z', label: 'position.z 高度', min: -0.08, max: 0.35, step: 0.005 },
-  { path: 'model.rotation.x', label: 'rotation.x', min: -3.142, max: 3.142, step: 0.01 },
-  { path: 'model.rotation.y', label: 'rotation.y', min: -3.142, max: 3.142, step: 0.01 },
-  { path: 'model.rotation.z', label: 'rotation.z', min: -3.142, max: 3.142, step: 0.01 },
-  { path: 'visual.bloomStrength', label: 'bloomStrength', min: 0.1, max: 0.8, step: 0.01 },
-  { path: 'visual.exposure', label: 'exposure', min: 0.45, max: 1, step: 0.01 },
-  { path: 'visual.ringOpacity', label: 'ringOpacity', min: 0, max: 0.24, step: 0.005 },
-  { path: 'visual.textOpacity', label: 'textOpacity', min: 0.28, max: 0.86, step: 0.01 },
+const TAB_LABELS = [
+  { id: 'transform', label: '变换' },
+  { id: 'brightness', label: '亮度' },
+  { id: 'labels', label: '标签' },
+  { id: 'save', label: '保存' },
 ];
+
+const RANGE_CONTROLS = {
+  transform: [
+    { path: 'scale', label: 'scale 缩放', min: 0.05, max: 2, step: 0.01, digits: 3 },
+    { path: 'position.x', label: 'position.x 左右', min: -2, max: 2, step: 0.01 },
+    { path: 'position.y', label: 'position.y 上下', min: -2, max: 2, step: 0.01 },
+    { path: 'position.z', label: 'position.z 远近/高度', min: -2, max: 2, step: 0.01 },
+    { path: 'rotation.x', label: 'rotation.x 角度', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
+    { path: 'rotation.y', label: 'rotation.y 角度', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
+    { path: 'rotation.z', label: 'rotation.z 角度', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
+  ],
+  brightness: [
+    { path: 'visual.laserIntensity', label: 'laserIntensity 激光', min: 0, max: 2, step: 0.01 },
+    { path: 'visual.bboIntensity', label: 'bboIntensity 晶体', min: 0, max: 2, step: 0.01 },
+    { path: 'visual.photonIntensity', label: 'photonIntensity 光子路径', min: 0, max: 2, step: 0.01 },
+    { path: 'visual.glowOpacity', label: 'glowOpacity 外发光', min: 0, max: 1, step: 0.01 },
+  ],
+  labels: [
+    { path: 'labels.labelScale', label: 'labelScale 标签大小', min: 0.3, max: 2, step: 0.05 },
+    { path: 'labels.labelOffset.x', label: 'labelOffsetX', min: -1, max: 1, step: 0.01 },
+    { path: 'labels.labelOffset.y', label: 'labelOffsetY', min: -1, max: 1, step: 0.01 },
+    { path: 'labels.labelOffset.z', label: 'labelOffsetZ', min: -1, max: 1, step: 0.01 },
+  ],
+};
+
+function createElement(tag, className, text = '') {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text) element.textContent = text;
+  return element;
+}
 
 function getByPath(source, path) {
   return path.split('.').reduce((cursor, segment) => cursor?.[segment], source);
@@ -21,19 +52,34 @@ function getByPath(source, path) {
 function setByPath(target, path, value) {
   const segments = path.split('.');
   let cursor = target;
-  for (let i = 0; i < segments.length - 1; i += 1) cursor = cursor[segments[i]];
+  for (let i = 0; i < segments.length - 1; i += 1) {
+    const segment = segments[i];
+    if (!cursor[segment] || typeof cursor[segment] !== 'object') cursor[segment] = {};
+    cursor = cursor[segment];
+  }
   cursor[segments[segments.length - 1]] = value;
 }
 
-function formatNumber(value) {
-  return Number(value).toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+function formatNumber(value, digits = 2, suffix = '') {
+  return `${Number(value).toFixed(digits).replace(/0+$/, '').replace(/\.$/, '')}${suffix}`;
 }
 
-function createElement(tag, className, text = '') {
-  const element = document.createElement(tag);
-  if (className) element.className = className;
-  if (text) element.textContent = text;
-  return element;
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function normalizeAngle(value) {
+  let next = Number(value) || 0;
+  while (next > 180) next -= 360;
+  while (next < -180) next += 360;
+  return next;
+}
+
+function createButton(text, onClick, className = 'calibration-action') {
+  const button = createElement('button', className, text);
+  button.type = 'button';
+  button.addEventListener('click', onClick);
+  return button;
 }
 
 export function createCalibrationUi({
@@ -48,33 +94,110 @@ export function createCalibrationUi({
   onToggle,
   onLowBrightnessChange,
 } = {}) {
-  let currentConfig = initialConfig;
+  let currentRuntimeConfig = initialConfig;
+  let currentCalibration = runtimeToCalibrationConfig(initialConfig);
   let isOpen = false;
   let lowBrightness = initialLowBrightness;
-  const inputs = new Map();
+  let activeTab = 'transform';
+  const controls = new Map();
 
-  const panel = createElement('aside', 'calibration-panel');
-  panel.setAttribute('aria-label', 'AR 校准面板');
+  const panel = createElement('aside', 'calibration-panel calibration-panel--realtime');
+  panel.setAttribute('aria-label', 'AR 实时校准面板');
   panel.setAttribute('aria-hidden', 'true');
 
   const header = createElement('div', 'calibration-panel__header');
   const titleWrap = createElement('div');
-  titleWrap.append(createElement('p', 'calibration-panel__kicker', 'Calibration'));
-  titleWrap.append(createElement('h3', '', 'AR 点位校准'));
+  titleWrap.append(createElement('p', 'calibration-panel__kicker', 'Realtime Calibration'));
+  titleWrap.append(createElement('h3', '', 'AR 实时校准'));
+  const headerActions = createElement('div', 'calibration-panel__header-actions');
+  const expandButton = createElement('button', 'calibration-panel__mini-action', '展开');
   const closeButton = createElement('button', 'calibration-panel__close', '×');
+  expandButton.type = 'button';
   closeButton.type = 'button';
+  expandButton.setAttribute('aria-label', '展开或收起校准面板高度');
   closeButton.setAttribute('aria-label', '关闭校准面板');
-  header.append(titleWrap, closeButton);
+  headerActions.append(expandButton, closeButton);
+  header.append(titleWrap, headerActions);
   panel.append(header);
 
   panel.append(createElement(
     'p',
     'calibration-panel__hint',
-    '打开后会显示识别图边框、中心十字和模型底座。调节会实时生效，保存到本机 localStorage。',
+    '滑块会实时生效，不需要刷新页面或重新识别。角度以 degree 显示，内部自动转为 Three.js radians。',
   ));
 
-  const controls = createElement('div', 'calibration-controls');
-  for (const control of CONTROLS) {
+  const tabBar = createElement('div', 'calibration-tabs');
+  const tabButtons = new Map();
+  for (const tab of TAB_LABELS) {
+    const button = createElement('button', 'calibration-tab', tab.label);
+    button.type = 'button';
+    button.dataset.tab = tab.id;
+    button.setAttribute('aria-pressed', tab.id === activeTab ? 'true' : 'false');
+    button.addEventListener('click', () => setActiveTab(tab.id));
+    tabButtons.set(tab.id, button);
+    tabBar.append(button);
+  }
+  panel.append(tabBar);
+
+  const body = createElement('div', 'calibration-panel__body');
+  const tabPanels = new Map();
+  panel.append(body);
+
+  function refreshCode() {}
+
+  function emitRealtimeChange() {
+    currentCalibration = normalizeCalibrationConfig(currentCalibration);
+    currentRuntimeConfig = applyCalibrationToARConfig(AR_CONFIG, currentCalibration);
+    refreshControls();
+    refreshCode();
+    onChange?.(currentRuntimeConfig, currentCalibration);
+  }
+
+  function setCalibrationValue(path, value, emit = true) {
+    setByPath(currentCalibration, path, value);
+    currentCalibration = normalizeCalibrationConfig(currentCalibration);
+    if (emit) emitRealtimeChange();
+    else refreshControls();
+  }
+
+  function adjustValue(path, delta) {
+    const control = [...Object.values(RANGE_CONTROLS).flat()].find((item) => item.path === path);
+    const current = Number(getByPath(currentCalibration, path) ?? 0);
+    const next = path.startsWith('rotation.')
+      ? normalizeAngle(current + delta)
+      : clamp(current + delta, control?.min ?? -Infinity, control?.max ?? Infinity);
+    setCalibrationValue(path, next);
+  }
+
+  function patchCalibration(patch) {
+    currentCalibration = normalizeCalibrationConfig({
+      ...currentCalibration,
+      ...patch,
+      position: {
+        ...currentCalibration.position,
+        ...(patch.position || {}),
+      },
+      rotation: {
+        ...currentCalibration.rotation,
+        ...(patch.rotation || {}),
+      },
+      visual: {
+        ...currentCalibration.visual,
+        ...(patch.visual || {}),
+      },
+      labels: {
+        ...currentCalibration.labels,
+        ...(patch.labels || {}),
+        labelOffset: {
+          ...currentCalibration.labels.labelOffset,
+          ...(patch.labels?.labelOffset || {}),
+        },
+      },
+    });
+    emitRealtimeChange();
+  }
+
+  function makeRange(control) {
     const row = createElement('label', 'calibration-row');
     const label = createElement('span', 'calibration-row__label', control.label);
     const value = createElement('output', 'calibration-row__value');
@@ -83,45 +206,186 @@ export function createCalibrationUi({
     input.min = String(control.min);
     input.max = String(control.max);
     input.step = String(control.step);
-    input.value = String(getByPath(currentConfig, control.path) ?? getByPath(AR_CONFIG, control.path));
     input.dataset.path = control.path;
-    value.textContent = formatNumber(input.value);
     input.addEventListener('input', () => {
       const nextValue = Number(input.value);
-      setByPath(currentConfig, control.path, nextValue);
-      value.textContent = formatNumber(nextValue);
-      onChange?.(currentConfig, control.path, nextValue);
+      setByPath(currentCalibration, control.path, nextValue);
+      currentCalibration = normalizeCalibrationConfig(currentCalibration);
+      value.textContent = formatNumber(getByPath(currentCalibration, control.path), control.digits ?? 2, control.suffix || '');
+      emitRealtimeChange();
     });
     row.append(label, value, input);
-    controls.append(row);
-    inputs.set(control.path, { input, value });
+    controls.set(control.path, { control, input, value });
+    return row;
   }
-  panel.append(controls);
 
-  const actions = createElement('div', 'calibration-actions');
-  const saveButton = createElement('button', 'calibration-action calibration-action--primary', '保存参数');
-  const resetButton = createElement('button', 'calibration-action', '重置参数');
-  const copyButton = createElement('button', 'calibration-action', '复制配置');
-  saveButton.type = 'button';
-  resetButton.type = 'button';
-  copyButton.type = 'button';
-  actions.append(saveButton, resetButton, copyButton);
-  panel.append(actions);
+  function makeQuickGrid(buttons) {
+    const grid = createElement('div', 'calibration-quick-grid');
+    for (const button of buttons) grid.append(button);
+    return grid;
+  }
 
+  function buildTransformPanel() {
+    const panelElement = createElement('section', 'calibration-tabpanel');
+    panelElement.dataset.panel = 'transform';
+    panelElement.append(createElement('p', 'calibration-section-title', '模型方向'));
+    panelElement.append(makeQuickGrid([
+      createButton('顺时针 90°', () => adjustValue('rotation.z', 90)),
+      createButton('逆时针 90°', () => adjustValue('rotation.z', -90)),
+      createButton('平放', () => patchCalibration({ rotation: { x: 90, y: 0, z: 90 } })),
+      createButton('竖放', () => patchCalibration({ rotation: { x: 0, y: 0, z: 90 } })),
+      createButton('默认角度', () => patchCalibration({ rotation: { ...DEFAULT_AR_CALIBRATION.rotation } })),
+    ]));
+    panelElement.append(createElement('p', 'calibration-section-title', '位置快捷微调'));
+    panelElement.append(makeQuickGrid([
+      createButton('上移', () => adjustValue('position.y', 0.05)),
+      createButton('下移', () => adjustValue('position.y', -0.05)),
+      createButton('左移', () => adjustValue('position.x', -0.05)),
+      createButton('右移', () => adjustValue('position.x', 0.05)),
+      createButton('靠近', () => adjustValue('position.z', 0.05)),
+      createButton('远离', () => adjustValue('position.z', -0.05)),
+      createButton('放大', () => adjustValue('scale', 0.01)),
+      createButton('缩小', () => adjustValue('scale', -0.01)),
+    ]));
+    for (const control of RANGE_CONTROLS.transform) panelElement.append(makeRange(control));
+    return panelElement;
+  }
+
+  function buildBrightnessPanel() {
+    const panelElement = createElement('section', 'calibration-tabpanel');
+    panelElement.dataset.panel = 'brightness';
+    panelElement.append(createElement('p', 'calibration-section-title', '发光快捷微调'));
+    panelElement.append(makeQuickGrid([
+      createButton('降低发光', () => patchCalibration({
+        visual: {
+          laserIntensity: currentCalibration.visual.laserIntensity * 0.85,
+          bboIntensity: currentCalibration.visual.bboIntensity * 0.85,
+          photonIntensity: currentCalibration.visual.photonIntensity * 0.85,
+          glowOpacity: currentCalibration.visual.glowOpacity * 0.82,
+        },
+      })),
+      createButton('增强发光', () => patchCalibration({
+        visual: {
+          laserIntensity: currentCalibration.visual.laserIntensity * 1.12,
+          bboIntensity: currentCalibration.visual.bboIntensity * 1.12,
+          photonIntensity: currentCalibration.visual.photonIntensity * 1.12,
+          glowOpacity: currentCalibration.visual.glowOpacity * 1.16,
+        },
+      })),
+      createButton('低亮度', () => patchCalibration({
+        visual: {
+          laserIntensity: 0.22,
+          bboIntensity: 0.18,
+          photonIntensity: 0.24,
+          glowOpacity: 0.05,
+        },
+      })),
+      createButton('标准亮度', () => patchCalibration({ visual: { ...DEFAULT_AR_CALIBRATION.visual } })),
+    ]));
+    for (const control of RANGE_CONTROLS.brightness) panelElement.append(makeRange(control));
+    return panelElement;
+  }
+
+  function buildLabelsPanel() {
+    const panelElement = createElement('section', 'calibration-tabpanel');
+    panelElement.dataset.panel = 'labels';
+    const switchRow = createElement('label', 'calibration-switch-row');
+    const switchText = createElement('span', 'calibration-row__label', 'showLabels 显示标签');
+    const switchInput = document.createElement('input');
+    switchInput.type = 'checkbox';
+    switchInput.addEventListener('change', () => {
+      currentCalibration.labels.showLabels = switchInput.checked;
+      emitRealtimeChange();
+    });
+    switchRow.append(switchText, switchInput);
+    controls.set('labels.showLabels', { input: switchInput, type: 'checkbox' });
+    panelElement.append(switchRow);
+    panelElement.append(makeQuickGrid([
+      createButton('隐藏标签', () => patchCalibration({ labels: { showLabels: false } })),
+      createButton('显示标签', () => patchCalibration({ labels: { showLabels: true } })),
+      createButton('标签复位', () => patchCalibration({ labels: { ...DEFAULT_AR_CALIBRATION.labels } })),
+    ]));
+    for (const control of RANGE_CONTROLS.labels) panelElement.append(makeRange(control));
+    return panelElement;
+  }
+
+  const savePanel = createElement('section', 'calibration-tabpanel');
+  savePanel.dataset.panel = 'save';
+  const saveActions = createElement('div', 'calibration-actions calibration-actions--stacked');
+  const saveButton = createButton('保存到本机', () => {
+    onSave?.(currentRuntimeConfig, currentCalibration);
+    refreshCode();
+  }, 'calibration-action calibration-action--primary');
+  const resetButton = createButton('重置默认值', () => {
+    const nextConfig = onReset?.();
+    currentRuntimeConfig = nextConfig || applyCalibrationToARConfig(AR_CONFIG, DEFAULT_AR_CALIBRATION);
+    currentCalibration = runtimeToCalibrationConfig(currentRuntimeConfig);
+    emitRealtimeChange();
+  });
+  const copyButton = createButton('复制当前 JSON', async () => {
+    const text = formatCalibrationJson(currentCalibration);
+    code.textContent = text;
+    fallbackTextarea.value = text;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(text);
+      fallbackTextarea.hidden = true;
+    } catch (error) {
+      console.warn('Clipboard write failed; showing textarea fallback.', error);
+      fallbackTextarea.hidden = false;
+      fallbackTextarea.focus();
+      fallbackTextarea.select();
+    }
+  });
+  saveActions.append(saveButton, resetButton, copyButton);
+  savePanel.append(saveActions);
   const code = createElement('pre', 'calibration-code');
-  code.textContent = formatConfigForSource(currentConfig);
-  panel.append(code);
+  const fallbackTextarea = document.createElement('textarea');
+  fallbackTextarea.className = 'calibration-copy-fallback';
+  fallbackTextarea.hidden = true;
+  fallbackTextarea.setAttribute('aria-label', '当前 AR 校准 JSON，长按复制');
+  savePanel.append(code, fallbackTextarea);
+
+  const panels = [
+    buildTransformPanel(),
+    buildBrightnessPanel(),
+    buildLabelsPanel(),
+    savePanel,
+  ];
+  for (const tabPanel of panels) {
+    body.append(tabPanel);
+    tabPanels.set(tabPanel.dataset.panel, tabPanel);
+  }
+
   mount?.append(panel);
 
-  function refreshInputs() {
-    for (const control of CONTROLS) {
-      const pair = inputs.get(control.path);
-      if (!pair) continue;
-      const value = getByPath(currentConfig, control.path);
+  function refreshControls() {
+    for (const [path, pair] of controls.entries()) {
+      if (pair.type === 'checkbox') {
+        pair.input.checked = Boolean(getByPath(currentCalibration, path));
+        continue;
+      }
+      const value = getByPath(currentCalibration, path);
       pair.input.value = String(value);
-      pair.value.textContent = formatNumber(value);
+      pair.value.textContent = formatNumber(value, pair.control.digits ?? 2, pair.control.suffix || '');
     }
-    code.textContent = formatConfigForSource(currentConfig);
+  }
+
+  refreshCode = function updateCode() {
+    const text = formatCalibrationJson(currentCalibration);
+    code.textContent = text;
+    if (!fallbackTextarea.hidden) fallbackTextarea.value = text;
+  };
+
+  function setActiveTab(nextTab) {
+    activeTab = nextTab;
+    for (const [tab, button] of tabButtons.entries()) {
+      button.classList.toggle('is-active', tab === activeTab);
+      button.setAttribute('aria-pressed', String(tab === activeTab));
+    }
+    for (const [tab, tabPanel] of tabPanels.entries()) {
+      tabPanel.hidden = tab !== activeTab;
+    }
   }
 
   function setOpen(nextOpen) {
@@ -141,30 +405,19 @@ export function createCalibrationUi({
     if (emit) onLowBrightnessChange?.(lowBrightness);
   }
 
+  expandButton.addEventListener('click', () => {
+    panel.classList.toggle('is-expanded');
+    expandButton.textContent = panel.classList.contains('is-expanded') ? '收起' : '展开';
+  });
   toggleButton?.addEventListener('click', () => setOpen(!isOpen));
   closeButton.addEventListener('click', () => setOpen(false));
   lowBrightnessButton?.addEventListener('click', () => setLowBrightness(!lowBrightness));
-  saveButton.addEventListener('click', () => {
-    onSave?.(currentConfig);
-    code.textContent = formatConfigForSource(currentConfig);
-  });
-  resetButton.addEventListener('click', () => {
-    const nextConfig = onReset?.();
-    if (nextConfig) currentConfig = nextConfig;
-    refreshInputs();
-  });
-  copyButton.addEventListener('click', async () => {
-    const text = formatConfigForSource(currentConfig);
-    code.textContent = text;
-    try {
-      await navigator.clipboard?.writeText(text);
-    } catch (error) {
-      console.warn('Clipboard write failed; config remains visible.', error);
-    }
-  });
 
+  setActiveTab(activeTab);
   setLowBrightness(lowBrightness, false);
-  refreshInputs();
+  currentRuntimeConfig = applyCalibrationToARConfig(AR_CONFIG, currentCalibration);
+  refreshControls();
+  refreshCode();
 
   return {
     setOpen,
@@ -172,8 +425,10 @@ export function createCalibrationUi({
       return isOpen;
     },
     setConfig(nextConfig) {
-      currentConfig = nextConfig;
-      refreshInputs();
+      currentRuntimeConfig = nextConfig;
+      currentCalibration = runtimeToCalibrationConfig(nextConfig);
+      refreshControls();
+      refreshCode();
     },
     setLowBrightness,
     dispose() {
