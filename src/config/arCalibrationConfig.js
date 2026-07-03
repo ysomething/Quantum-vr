@@ -1,19 +1,19 @@
 export const AR_CALIBRATION_STORAGE_KEY = 'quantum_ar_calibration_config';
 
 export const DEFAULT_AR_CALIBRATION = {
-  scale: 0.058,
+  scale: 0.05,
   position: { x: 0, y: -0.04, z: 0.14 },
-  rotation: { x: 90, y: 0, z: 90 },
+  rotation: { x: 0, y: 0, z: 0 },
   visual: {
-    laserIntensity: 0.32,
-    bboIntensity: 0.28,
-    photonIntensity: 0.36,
-    glowOpacity: 0.1,
+    laserIntensity: 0.2803,
+    bboIntensity: 0.2452,
+    photonIntensity: 0.3153,
+    glowOpacity: 0.0903,
   },
   labels: {
-    showLabels: true,
+    showLabels: false,
     labelScale: 1,
-    labelOffset: { x: 0, y: 0, z: 0 },
+    labelOffset: { x: 0, y: 0, z: 0.35 },
   },
 };
 
@@ -168,6 +168,16 @@ function mapCalibrationVisual(baseVisual = {}, calibrationVisual = DEFAULT_AR_CA
     bboPulseOpacity: Math.min(0.24, Math.max(0, glowOpacity * 0.4)),
     bboAuraOpacity: Math.min(0.18, Math.max(0, glowOpacity * 0.22)),
     targetFlashOpacity: Math.min(0.18, Math.max(0, glowOpacity * 0.36)),
+    laserBeamColor: 0x7a6cff,
+    laserBeamGlowColor: 0x6d7cff,
+    photonPathAColor: 0x5fe8ff,
+    photonPathBColor: 0xcf8cff,
+    bboColor: 0xb8f3ff,
+    opticalPathColorMix: 0.78,
+    opticalPathColorBoost: 1.02,
+    laserCoreOpacity: Math.max(0.22, glowOpacity * 2.2),
+    photonCoreOpacity: Math.max(0.24, glowOpacity * 2.35),
+    bboCoreOpacity: Math.max(0.16, glowOpacity * 1.55),
   };
 }
 

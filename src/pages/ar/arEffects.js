@@ -20,6 +20,21 @@ function lowFactor(kind, lowBrightnessMode) {
   return factors[kind] ?? 1;
 }
 
+function colorFromVisual(value, fallback) {
+  if (value?.isColor) return value.clone();
+  return new THREE.Color(value ?? fallback);
+}
+
+function getOpticalPathColors(visual = AR_CONFIG.visual) {
+  return {
+    pump: colorFromVisual(visual.laserBeamColor, 0x7a6cff),
+    pumpGlow: colorFromVisual(visual.laserBeamGlowColor, 0x6d7cff),
+    photonA: colorFromVisual(visual.photonPathAColor, 0x5fe8ff),
+    photonB: colorFromVisual(visual.photonPathBColor, 0xcf8cff),
+    bbo: colorFromVisual(visual.bboColor, 0xb8f3ff),
+  };
+}
+
 function roundRect(ctx, x, y, width, height, radius) {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -204,7 +219,8 @@ function createParticleField(root, isMobile, visual) {
   return { count, positions, bases, phases, geometry, material, points };
 }
 
-function createBboPulse(root, bboPosition) {
+function createBboPulse(root, bboPosition, visual) {
+  const colors = getOpticalPathColors(visual);
   const group = new THREE.Group();
   group.name = 'ar_bbo_pulse_system';
   group.position.copy(bboPosition);
@@ -212,7 +228,7 @@ function createBboPulse(root, bboPosition) {
   const rings = [];
   for (let i = 0; i < 4; i += 1) {
     const material = new THREE.MeshBasicMaterial({
-      color: i % 2 ? 0xa86dff : 0x45eeff,
+      color: i % 2 ? colors.photonB : colors.photonA,
       transparent: true,
       opacity: 0,
       side: THREE.DoubleSide,
@@ -226,7 +242,7 @@ function createBboPulse(root, bboPosition) {
   }
   const aura = new THREE.Mesh(
     new THREE.SphereGeometry(0.26, 28, 18),
-    new THREE.MeshBasicMaterial({ color: 0x5beaff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }),
+    new THREE.MeshBasicMaterial({ color: colors.bbo, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }),
   );
   group.add(aura);
   return { group, rings, aura, cursor: 0 };
@@ -265,17 +281,18 @@ export function createQuantumAREffects({ anchorGroup, modelRoot, camera, anchors
 
   const portal = createTargetPortal(anchorGroup, visual);
   const particles = createParticleField(modelRoot, isMobile, visual);
-  const pulse = createBboPulse(modelRoot, bboPosition);
+  let opticalColors = getOpticalPathColors(visual);
+  const pulse = createBboPulse(modelRoot, bboPosition, visual);
   const textPanel = createTextPanel(anchorGroup, visual);
   const curveA = makeTrailCurve(bboPosition, polarizerAPosition, apdAPosition);
   const curveB = makeTrailCurve(bboPosition, polarizerBPosition, apdBPosition);
   const trailCount = isMobile ? 20 : 34;
-  const trailA = createTrail(modelRoot, curveA, new THREE.Color(0x3ff2ff), trailCount, 'ar_photon_trail_A', visual);
-  const trailB = createTrail(modelRoot, curveB, new THREE.Color(0xc071ff), trailCount, 'ar_photon_trail_B', visual);
+  const trailA = createTrail(modelRoot, curveA, opticalColors.photonA.clone(), trailCount, 'ar_photon_trail_A', visual);
+  const trailB = createTrail(modelRoot, curveB, opticalColors.photonB.clone(), trailCount, 'ar_photon_trail_B', visual);
   const beams = [
-    createBeam(modelRoot, new THREE.CatmullRomCurve3([laserPosition, laserPosition.clone().lerp(bboPosition, 0.58), bboPosition], false, 'centripetal'), 0x9ff7ff, 0.018, 'ar_405nm_pump_beam', visual.beamOpacity * 0.9),
-    createBeam(modelRoot, curveA, 0x38f2ff, 0.017, 'ar_entangled_beam_A', visual.beamOpacity),
-    createBeam(modelRoot, curveB, 0xc16cff, 0.017, 'ar_entangled_beam_B', visual.beamOpacity * 0.95),
+    createBeam(modelRoot, new THREE.CatmullRomCurve3([laserPosition, laserPosition.clone().lerp(bboPosition, 0.58), bboPosition], false, 'centripetal'), opticalColors.pump, 0.018, 'ar_405nm_pump_beam', visual.beamOpacity * 0.9),
+    createBeam(modelRoot, curveA, opticalColors.photonA, 0.017, 'ar_entangled_beam_A', visual.beamOpacity),
+    createBeam(modelRoot, curveB, opticalColors.photonB, 0.017, 'ar_entangled_beam_B', visual.beamOpacity * 0.95),
   ];
 
   let climaxEnergy = 0;
@@ -300,9 +317,22 @@ export function createQuantumAREffects({ anchorGroup, modelRoot, camera, anchors
   }
 
   function refreshBeamBaseOpacity() {
-    beams[0].baseOpacity = visual.beamOpacity * 0.9;
-    beams[1].baseOpacity = visual.beamOpacity;
-    beams[2].baseOpacity = visual.beamOpacity * 0.95;
+    beams[0].baseOpacity = Math.min(0.24, Math.max(visual.beamOpacity * 0.9, visual.laserCoreOpacity ?? 0));
+    beams[1].baseOpacity = Math.min(0.26, Math.max(visual.beamOpacity, visual.photonCoreOpacity ?? 0));
+    beams[2].baseOpacity = Math.min(0.26, Math.max(visual.beamOpacity * 0.95, (visual.photonCoreOpacity ?? 0) * 0.96));
+  }
+
+  function refreshOpticalColors() {
+    opticalColors = getOpticalPathColors(visual);
+    beams[0].material.color.copy(opticalColors.pump);
+    beams[1].material.color.copy(opticalColors.photonA);
+    beams[2].material.color.copy(opticalColors.photonB);
+    trailA.color.copy(opticalColors.photonA);
+    trailB.color.copy(opticalColors.photonB);
+    pulse.aura.material.color.copy(opticalColors.bbo);
+    pulse.rings.forEach((item, index) => {
+      item.material.color.copy(index % 2 ? opticalColors.photonB : opticalColors.photonA);
+    });
   }
 
   function triggerBboPulse(strength = 1, elapsed = 0) {
@@ -318,7 +348,10 @@ export function createQuantumAREffects({ anchorGroup, modelRoot, camera, anchors
 
   function updateTrail(trail, elapsed) {
     trail.points.visible = visible;
-    const targetOpacity = effectiveOpacity('trail', visual.trailOpacity);
+    const targetOpacity = Math.min(
+      0.3,
+      Math.max(effectiveOpacity('trail', visual.trailOpacity), (visual.photonCoreOpacity ?? 0) * 0.72 * lowFactor('trail', lowBrightness)),
+    );
     trail.material.opacity = visible ? targetOpacity : 0;
     if (!visible) return;
     const period = 2.65;
@@ -416,6 +449,9 @@ export function createQuantumAREffects({ anchorGroup, modelRoot, camera, anchors
     triggerBboPulse(1.25, elapsed);
   }
 
+  refreshBeamBaseOpacity();
+  refreshOpticalColors();
+
   return {
     update(delta, elapsed) {
       climaxEnergy = Math.max(0, climaxEnergy - delta * 0.42);
@@ -456,6 +492,7 @@ export function createQuantumAREffects({ anchorGroup, modelRoot, camera, anchors
       runtimeConfig = mergeARConfig(AR_CONFIG, { ...runtimeConfig, visual: nextVisualConfig });
       visual = runtimeConfig.visual;
       refreshBeamBaseOpacity();
+      refreshOpticalColors();
       applyTextTransform();
     },
     stats: {

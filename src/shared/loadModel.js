@@ -21,15 +21,26 @@ function findFirst(root, names) {
   return match;
 }
 
-function colorForName(name, role = getLightSourceRole(name)) {
+function getPhotonPathSide(name = '') {
+  const lower = String(name).toLowerCase();
+  if (/path_b|photon_b|_b_|-b-|orange|purple|magenta|idler|right/.test(lower)) return 'b';
+  if (/path_a|photon_a|_a_|-a-|cyan|signal|left/.test(lower)) return 'a';
+  return 'a';
+}
+
+function colorForName(name, role = getLightSourceRole(name), visual = {}) {
   if (role === 'laserEmitterShell') return new THREE.Color(0xd2dbe4);
-  if (role === 'laserEmitterAperture') return new THREE.Color(0x788bff);
-  if (role === 'laserBeam') return new THREE.Color(0x7f8cff);
-  if (role === 'bbo') return new THREE.Color(0x5beaff);
-  if (/path_b|photon_b|purple|orange/i.test(name)) return new THREE.Color(0xb46dff);
+  if (role === 'laserEmitterAperture') return colorFromConfig(visual.laserBeamGlowColor, 0x788bff);
+  if (role === 'laserBeam') return colorFromConfig(visual.laserBeamColor, 0x7f8cff);
+  if (role === 'bbo') return colorFromConfig(visual.bboColor, 0x5beaff);
+  if (role === 'photonPath') {
+    const side = getPhotonPathSide(name);
+    return colorFromConfig(side === 'b' ? visual.photonPathBColor : visual.photonPathAColor, side === 'b' ? 0xb46dff : 0x35e8ff);
+  }
+  if (/path_b|photon_b|purple|orange/i.test(name)) return colorFromConfig(visual.photonPathBColor, 0xb46dff);
   if (/counter|screen/i.test(name)) return new THREE.Color(0x64f3ff);
-  if (/405|laser/i.test(name)) return new THREE.Color(0x6f86ff);
-  return new THREE.Color(0x35e8ff);
+  if (/405|laser/i.test(name)) return colorFromConfig(visual.laserBeamColor, 0x6f86ff);
+  return colorFromConfig(visual.photonPathAColor, 0x35e8ff);
 }
 
 function getLightSourceRole(name = '') {
@@ -86,6 +97,59 @@ function roleOpacityMultiplier(role, visual) {
   }
 }
 
+function roleTintAmount(role, visual) {
+  if (typeof visual.opticalPathColorMix === 'number') {
+    switch (role) {
+      case 'laserBeam':
+      case 'laserEmitterAperture':
+      case 'photonPath':
+      case 'bbo':
+        return THREE.MathUtils.clamp(visual.opticalPathColorMix, 0, 1);
+      default:
+        break;
+    }
+  }
+
+  if (role === 'laserBeam' || role === 'bbo') return 0.5;
+  return 0.24;
+}
+
+function roleColorBoost(role, multiplier, pulse, visual) {
+  if (typeof visual.opticalPathColorBoost === 'number') {
+    const pulseBoost = pulse * (role === 'detector' ? 0.05 : 0.025);
+    return THREE.MathUtils.clamp(visual.opticalPathColorBoost + pulseBoost, 0.7, 1.18);
+  }
+  return 0.78 + multiplier * 0.3 + pulse * 0.06;
+}
+
+function roleCoreOpacity(role, visual) {
+  switch (role) {
+    case 'laserBeam':
+    case 'laserEmitterAperture':
+      return visual.laserCoreOpacity;
+    case 'photonPath':
+      return visual.photonCoreOpacity;
+    case 'bbo':
+      return visual.bboCoreOpacity;
+    default:
+      return null;
+  }
+}
+
+function roleMaxOpacity(role) {
+  switch (role) {
+    case 'laserBeam':
+    case 'laserEmitterAperture':
+      return 0.38;
+    case 'photonPath':
+      return 0.42;
+    case 'bbo':
+      return 0.3;
+    default:
+      return 1;
+  }
+}
+
 const MODEL_VISUAL_CONTROL_KEYS = [
   'opticalTableColor',
   'opticalTableRoughness',
@@ -94,6 +158,10 @@ const MODEL_VISUAL_CONTROL_KEYS = [
   'opticalTableToneMapped',
   'laserBeamIntensity',
   'laserBeamGlowOpacity',
+  'laserBeamColor',
+  'laserBeamGlowColor',
+  'laserIntensity',
+  'glowOpacity',
   'laserEmitterIntensity',
   'laserEmitterGlowOpacity',
   'laserEmitterApertureIntensity',
@@ -101,10 +169,19 @@ const MODEL_VISUAL_CONTROL_KEYS = [
   'laserEmitterColor',
   'bboIntensity',
   'bboGlowOpacity',
+  'bboColor',
   'photonPathIntensity',
   'photonPathGlowOpacity',
   'photonTrailOpacity',
+  'photonPathAColor',
+  'photonPathBColor',
+  'photonIntensity',
   'detectorGlowIntensity',
+  'opticalPathColorMix',
+  'opticalPathColorBoost',
+  'laserCoreOpacity',
+  'photonCoreOpacity',
+  'bboCoreOpacity',
   'bboInternalLightMaxIntensity',
 ];
 
@@ -293,6 +370,7 @@ function enhanceRuntimeGlow(root) {
         baseIntensity,
         baseColor,
         baseOpacity,
+        name: object.name || '',
         role,
         targetColor,
       });
@@ -338,7 +416,10 @@ function enhanceRuntimeGlow(root) {
         continue;
       }
 
+      const tint = colorForName(entry.name, entry.role, visual);
+
       if (entry.baseIntensity !== null && entry.material.emissive) {
+        entry.material.emissive.copy(tint);
         const pulseFactor = (visual.emissiveBase ?? 1) + pulse * (visual.emissivePulse ?? 0.42);
         const target = entry.baseIntensity * pulseFactor * multiplier;
         const maxIntensity = (visual.emissiveMax ?? 1.5) * Math.max(multiplier, 0.12);
@@ -346,14 +427,20 @@ function enhanceRuntimeGlow(root) {
       }
 
       if (entry.baseColor && entry.material.color) {
-        const tint = entry.targetColor || colorForName('', entry.role);
-        const tintAmount = entry.role === 'laserBeam' || entry.role === 'bbo' ? 0.5 : 0.24;
-        const colorBoost = 0.78 + multiplier * 0.3 + pulse * 0.06;
+        const tintAmount = roleTintAmount(entry.role, visual);
+        const colorBoost = roleColorBoost(entry.role, multiplier, pulse, visual);
         entry.material.color.copy(entry.baseColor).lerp(tint, tintAmount).multiplyScalar(colorBoost);
       }
 
       if (entry.material.transparent && 'opacity' in entry.material) {
-        entry.material.opacity = Math.min(entry.baseOpacity, entry.baseOpacity * opacityMultiplier);
+        const requestedCoreOpacity = roleCoreOpacity(entry.role, visual);
+        if (typeof requestedCoreOpacity === 'number') {
+          const coreOpacity = THREE.MathUtils.clamp(requestedCoreOpacity, 0, roleMaxOpacity(entry.role));
+          const targetOpacity = Math.max(entry.baseOpacity * opacityMultiplier, coreOpacity);
+          entry.material.opacity = Math.min(roleMaxOpacity(entry.role), targetOpacity);
+        } else {
+          entry.material.opacity = Math.min(entry.baseOpacity, entry.baseOpacity * opacityMultiplier);
+        }
       }
     }
   }
