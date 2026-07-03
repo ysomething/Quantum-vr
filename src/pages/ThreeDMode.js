@@ -418,6 +418,14 @@ export async function mount(app, { navigate }) {
     if (mobileButton) mobileButton.textContent = enabled ? '关闭体感' : '开启体感';
   }
 
+  function syncMobileOverlayState() {
+    const drawer = by(page, '[data-mobile-drawer]');
+    const sheet = by(page, '[data-mobile-path-sheet]');
+    const open = Boolean((drawer && !drawer.hidden) || (sheet && !sheet.hidden));
+    page.classList.toggle('mobile-menu-open', open);
+    document.body.classList.toggle('mobile-menu-open', open);
+  }
+
   function setMobileDrawerOpen(open) {
     const drawer = by(page, '[data-mobile-drawer]');
     const backdrop = by(page, '[data-mobile-drawer-backdrop]');
@@ -425,6 +433,7 @@ export async function mount(app, { navigate }) {
     drawer.hidden = !open;
     backdrop.hidden = !open;
     button?.setAttribute('aria-expanded', String(open));
+    syncMobileOverlayState();
   }
 
   function setMobilePathOpen(open) {
@@ -432,6 +441,7 @@ export async function mount(app, { navigate }) {
     const backdrop = by(page, '[data-mobile-drawer-backdrop]');
     sheet.hidden = !open;
     backdrop.hidden = !open;
+    syncMobileOverlayState();
   }
 
   function closeMobilePanels() {
@@ -526,6 +536,7 @@ export async function mount(app, { navigate }) {
   });
 
   document.body.dataset.climax = 'pending';
+  bag.add(() => document.body.classList.remove('mobile-menu-open'));
 
   return {
     dispose: () => bag.dispose(),

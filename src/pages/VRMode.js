@@ -366,6 +366,13 @@ export async function mount(app, { navigate }) {
     if (panel) panel.hidden = true;
   }
 
+  function syncMobileOverlayState() {
+    const drawer = by(page, '[data-mobile-drawer]');
+    const open = Boolean(drawer && !drawer.hidden);
+    page.classList.toggle('mobile-menu-open', open);
+    document.body.classList.toggle('mobile-menu-open', open);
+  }
+
   function setMobileDrawerOpen(open) {
     const drawer = by(page, '[data-mobile-drawer]');
     const backdrop = by(page, '[data-mobile-drawer-backdrop]');
@@ -373,6 +380,7 @@ export async function mount(app, { navigate }) {
     drawer.hidden = !open;
     backdrop.hidden = !open;
     button?.setAttribute('aria-expanded', String(open));
+    syncMobileOverlayState();
   }
 
   function closeMobileDrawer() {
@@ -474,6 +482,7 @@ export async function mount(app, { navigate }) {
   });
 
   document.body.dataset.climax = 'pending';
+  bag.add(() => document.body.classList.remove('mobile-menu-open'));
 
   return {
     dispose: () => bag.dispose(),

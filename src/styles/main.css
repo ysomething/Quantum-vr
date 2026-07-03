@@ -2787,6 +2787,28 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
   body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
     bottom: calc(env(safe-area-inset-bottom, 0px) + 92px) !important;
   }
+
+  body.mobile-menu-open .lab-mode-page .mobile-bottom-hint,
+  body.mobile-menu-open .lab-mode-page .hotspot-card,
+  body.mobile-menu-open .lab-mode-page .spatial-panel,
+  body.mobile-menu-open .lab-mode-page .toast,
+  .lab-mode-page.mobile-menu-open .mobile-bottom-hint,
+  .lab-mode-page.mobile-menu-open .hotspot-card,
+  .lab-mode-page.mobile-menu-open .spatial-panel,
+  .lab-mode-page.mobile-menu-open .toast {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .lab-mode-page .mobile-drawer-backdrop {
+    z-index: 110 !important;
+  }
+
+  .lab-mode-page .mobile-drawer,
+  .lab-mode-page .mobile-path-sheet {
+    z-index: 120 !important;
+  }
 }
 
 @media (max-width: 768px) and (orientation: landscape) {
