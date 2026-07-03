@@ -19,14 +19,31 @@ import { createCalibrationUi } from './ar/calibrationUi.js';
 import { createARPerformanceMonitor } from './ar/arPerformance.js';
 
 const STATUS_TEXT = {
-  idle: '对准识别图，装置将自动浮现。',
-  starting: '正在启动摄像头与识别器…',
-  scanning: '对准识别图，装置将自动浮现。',
+  idle: '等待开始扫描',
+  checkingCamera: '正在检查摄像头权限',
+  loadingTarget: '正在加载识别图',
+  starting: '正在启动 AR',
+  scanning: '摄像头已启动，请对准识别图',
   found: '识别成功：实验室已启动。',
   lost: '请重新对准识别图。',
   targetError: '识别文件加载失败。',
-  cameraError: '摄像头启动失败，请检查权限；如果无法授权，请切换到 3D 展示模式。',
+  insecureContext: '当前环境可能无法启动摄像头。请使用 HTTPS 链接访问，或部署到 GitHub Pages 后再扫码体验。',
+  cameraError: '摄像头启动失败。请检查微信摄像头权限，或点击右上角使用系统浏览器打开。',
   modelError: '3D 模型加载失败。',
+};
+
+const PREFERRED_CAMERA_CONSTRAINTS = {
+  video: {
+    facingMode: { ideal: 'environment' },
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+  },
+  audio: false,
+};
+
+const FALLBACK_CAMERA_CONSTRAINTS = {
+  video: true,
+  audio: false,
 };
 
 function renderShell() {
@@ -47,6 +64,7 @@ function renderShell() {
         <p class="ar-wechat-hint">${isWeChat() ? '当前为微信环境：如无法启动摄像头，请尝试右上角用系统浏览器打开。' : '电脑端可预览页面，正式扫码建议使用手机微信或系统浏览器。'}</p>
         <p class="ar-wechat-hint">${isSecureLikeContext() ? '当前页面满足摄像头安全上下文要求。' : '摄像头通常需要 HTTPS、localhost 或局域网安全配置。'}</p>
         <p class="ar-security-warning">${isSecureLikeContext() ? '' : '当前环境可能无法调用摄像头，正式展示请使用 HTTPS 链接。'}</p>
+        <p class="ar-debug-status" data-ar-debug-status>状态：${STATUS_TEXT.idle}</p>
       </div>
     </section>
 
@@ -65,6 +83,7 @@ function renderShell() {
         </div>
         <button class="mobile-icon-button ar-mobile-menu-button" type="button" data-ar-menu aria-expanded="false" aria-label="打开 AR 操作菜单">☰</button>
       </div>
+      <p class="ar-debug-status ar-debug-status--stage" data-ar-debug-status>状态：${STATUS_TEXT.idle}</p>
       <div class="ar-scan-overlay" data-scan-overlay>
         <div class="scan-frame" aria-hidden="true"></div>
         <p data-scan-message>${STATUS_TEXT.idle}</p>
@@ -107,6 +126,7 @@ function renderShell() {
         <div class="ar-fallback-actions">
           <button class="primary-button" type="button" data-retry>重试</button>
           <button class="secondary-button" type="button" data-error-3d>切换到 3D 展示模式</button>
+          <button class="ghost-button" type="button" data-error-home>返回首页</button>
         </div>
       </div>
     </section>
@@ -156,6 +176,14 @@ function setState(page, state) {
   page.dataset.arState = state;
   const message = STATUS_TEXT[state] || STATUS_TEXT.scanning;
   by(page, '[data-scan-message]').textContent = message;
+  setDebugStatus(page, `状态：${message}`);
+}
+
+function setDebugStatus(page, message, isError = false) {
+  page.querySelectorAll('[data-ar-debug-status]').forEach((element) => {
+    element.textContent = message;
+    element.classList.toggle('is-error', isError);
+  });
 }
 
 function setLoading(page, title, message, progress = null) {
@@ -172,12 +200,13 @@ function hideLoading(page) {
   by(page, '[data-loading-bar]').style.transform = 'scaleX(0.04)';
 }
 
-function showError(page, message) {
+function showError(page, message, state = 'cameraError') {
   hideLoading(page);
-  setState(page, 'cameraError');
+  setState(page, state);
   by(page, '[data-error-message]').textContent = message;
   by(page, '[data-error]').hidden = false;
   by(page, '[data-scan-overlay]').classList.remove('is-hidden');
+  setDebugStatus(page, `状态：${STATUS_TEXT[state] || '启动失败'}${message ? `：${message}` : ''}`, true);
 }
 
 function hideError(page) {
@@ -195,12 +224,83 @@ async function assetExists(url) {
   }
 }
 
+function createStartupError(code, message, cause = null) {
+  const error = new Error(message);
+  error.code = code;
+  if (cause) error.cause = cause;
+  return error;
+}
+
+function getErrorDetail(error) {
+  const candidates = [error, error?.cause, error?.primaryError].filter(Boolean);
+  const details = candidates
+    .map((item) => {
+      const name = item.name || item.code || 'Error';
+      const itemMessage = item.message || String(item);
+      return `${name}${itemMessage ? `: ${itemMessage}` : ''}`;
+    })
+    .filter(Boolean);
+  return [...new Set(details)].join('；');
+}
+
+function stopProbeStream(stream) {
+  stream?.getTracks?.().forEach((track) => track.stop());
+}
+
+async function requestCameraProbe() {
+  if (!isSecureLikeContext()) {
+    throw createStartupError('INSECURE_CONTEXT', STATUS_TEXT.insecureContext);
+  }
+
+  if (!canUseCamera()) {
+    throw createStartupError(
+      'CAMERA_UNAVAILABLE',
+      '当前浏览器不支持摄像头访问。请使用手机微信、Chrome、Safari，或通过 HTTPS 页面访问。',
+    );
+  }
+
+  let primaryError = null;
+  let stream = null;
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(PREFERRED_CAMERA_CONSTRAINTS);
+  } catch (error) {
+    primaryError = error;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(FALLBACK_CAMERA_CONSTRAINTS);
+    } catch (fallbackError) {
+      fallbackError.primaryError = primaryError;
+      throw createStartupError('CAMERA_PERMISSION_FAILED', STATUS_TEXT.cameraError, fallbackError);
+    }
+  }
+
+  const track = stream.getVideoTracks?.()[0] || null;
+  const settings = track?.getSettings?.() || {};
+  return {
+    stream,
+    deviceId: settings.deviceId || null,
+    label: settings.label || track?.label || '',
+  };
+}
+
 function mapStartupError(error) {
   const message = String(error?.message || error || '');
-  if (error?.code === 'TARGET_MISSING' || /target\.mind|image target|compile/i.test(message)) return STATUS_TEXT.targetError;
-  if (error?.code === 'MODEL_MISSING' || /scene12_13_vr|GLB|gltf|model/i.test(message)) return STATUS_TEXT.modelError;
-  if (/camera|permission|NotAllowed|NotFound|getUserMedia|Requested device/i.test(message)) return STATUS_TEXT.cameraError;
-  return `AR 启动失败：${message || '请检查摄像头权限、HTTPS 和识别文件。'}`;
+  const detail = getErrorDetail(error);
+  if (error?.code === 'INSECURE_CONTEXT') return STATUS_TEXT.insecureContext;
+  if (error?.code === 'CAMERA_UNAVAILABLE') return error.message;
+  if (error?.code === 'TARGET_MISSING' || /target\.mind|image target|compile/i.test(message)) {
+    return `${STATUS_TEXT.targetError} 请确认 ${AR_CONFIG.assets.imageTargetSrc} 可以访问。${detail ? ` 错误：${detail}` : ''}`;
+  }
+  if (error?.code === 'MODEL_MISSING' || /scene12_13_vr|GLB|gltf|model/i.test(message)) {
+    return `${STATUS_TEXT.modelError}${detail ? ` 错误：${detail}` : ''}`;
+  }
+  if (/camera|permission|NotAllowed|NotFound|NotReadable|getUserMedia|Requested device|Permission/i.test(message + detail)) {
+    const help = isWeChat()
+      ? '请检查微信摄像头权限，或点击右上角使用系统浏览器打开。'
+      : '请检查浏览器摄像头权限，或换用 HTTPS 链接访问。';
+    return `${STATUS_TEXT.cameraError} ${help}${detail ? ` 错误：${detail}` : ''}`;
+  }
+  return `AR 启动失败：${message || '请检查摄像头权限、HTTPS 和识别文件。'}${detail ? ` 错误：${detail}` : ''}`;
 }
 
 function wireModal(page, openSelector, modalSelector, closeSelector) {
@@ -322,22 +422,31 @@ export async function mount(app, { navigate }) {
   async function startScan() {
     if (startInProgress) return;
     startInProgress = true;
+    let cameraProbe = null;
     by(page, '[data-start-screen]').hidden = true;
     by(page, '[data-ar-stage]').hidden = false;
     by(page, '[data-ar-stage]').classList.add('is-active');
     by(page, '[data-scan-overlay]').classList.remove('is-hidden');
     hideError(page);
-    setState(page, 'starting');
-    setLoading(page, '检查识别文件', '正在确认 public/targets/target.mind…', 0.08);
+    setState(page, 'checkingCamera');
+    setLoading(
+      page,
+      '正在检查摄像头权限',
+      isWeChat() ? '正在请求摄像头权限，请在弹窗中选择允许。' : '正在请求摄像头权限，请在浏览器弹窗中选择允许。',
+      0.08,
+    );
     document.body.classList.add('is-ar-running');
 
     try {
-      if (!canUseCamera()) {
-        throw new Error('getUserMedia unavailable');
-      }
-
       await stopSession();
 
+      cameraProbe = await requestCameraProbe();
+      const cameraDeviceId = cameraProbe.deviceId;
+      stopProbeStream(cameraProbe.stream);
+      cameraProbe = null;
+
+      setState(page, 'loadingTarget');
+      setLoading(page, '正在加载识别图', `正在确认 ${AR_CONFIG.assets.imageTargetSrc}`, 0.16);
       const hasTarget = await assetExists(AR_CONFIG.assets.imageTargetSrc);
       if (!hasTarget) {
         const error = new Error('target.mind missing');
@@ -345,11 +454,13 @@ export async function mount(app, { navigate }) {
         throw error;
       }
 
-      setLoading(page, '启动摄像头', '请在弹窗中允许摄像头权限。', 0.18);
+      setState(page, 'starting');
+      setLoading(page, '正在启动 AR', '摄像头权限已确认，正在启动图像识别。', 0.24);
       session = createARSession({
         container: by(page, '#ar-container'),
         imageTargetSrc: AR_CONFIG.assets.imageTargetSrc,
         visualConfig: runtimeConfig.visual,
+        cameraDeviceId,
       });
       wireTargetCallbacks(session.anchor);
 
@@ -417,8 +528,16 @@ export async function mount(app, { navigate }) {
       showToast(page, '摄像头已启动，请对准量子纠缠识别图。', 2200);
     } catch (error) {
       console.error(error);
+      stopProbeStream(cameraProbe?.stream);
       await stopSession();
-      showError(page, mapStartupError(error));
+      const state = error?.code === 'INSECURE_CONTEXT'
+        ? 'insecureContext'
+        : error?.code === 'TARGET_MISSING'
+          ? 'targetError'
+          : error?.code === 'MODEL_MISSING'
+            ? 'modelError'
+            : 'cameraError';
+      showError(page, mapStartupError(error), state);
     } finally {
       startInProgress = false;
     }
@@ -482,6 +601,7 @@ export async function mount(app, { navigate }) {
     await stopSession();
     navigate('/3d');
   });
+  by(page, '[data-error-home]').addEventListener('click', goHome);
   by(page, '[data-back-start]').addEventListener('click', goHome);
   by(page, '[data-back-stage]').addEventListener('click', goHome);
   by(page, '[data-help]').addEventListener('click', () => { by(page, '[data-help-modal]').hidden = false; });

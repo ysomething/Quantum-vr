@@ -30,9 +30,13 @@
 html,
 body,
 #app {
-  width: 100%;
-  min-height: 100%;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
   margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #020713;
 }
 
 body {
@@ -43,6 +47,11 @@ body {
     radial-gradient(circle at 82% 8%, rgba(149, 113, 255, 0.16), transparent 30rem),
     linear-gradient(135deg, #07142a 0%, var(--bg) 48%, #02040a 100%);
   color: var(--text);
+}
+
+#app {
+  position: relative;
+  isolation: isolate;
 }
 
 body::before {
@@ -66,19 +75,6 @@ input {
 
 button {
   cursor: pointer;
-}
-
-.skip-link {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  z-index: 100;
-  transform: translateY(-150%);
-  color: var(--text);
-}
-
-.skip-link:focus {
-  transform: translateY(0);
 }
 
 .eyebrow {
@@ -633,6 +629,37 @@ input:focus-visible {
   color: #ffd18a;
   font-size: 0.88rem;
   line-height: 1.55;
+}
+
+.ar-debug-status {
+  margin: 0.65rem 0 0;
+  padding: 0.55rem 0.72rem;
+  border: 1px solid rgba(94, 231, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(2, 12, 26, 0.42);
+  color: rgba(222, 242, 255, 0.72);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.ar-debug-status.is-error {
+  border-color: rgba(255, 100, 130, 0.34);
+  background: rgba(64, 10, 24, 0.52);
+  color: #ffd2dc;
+}
+
+.ar-debug-status--stage {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 76px);
+  left: max(14px, env(safe-area-inset-left));
+  z-index: 14;
+  width: fit-content;
+  max-width: min(560px, calc(100vw - 28px));
+  margin: 0 auto;
+  text-align: center;
+  backdrop-filter: blur(14px);
+  pointer-events: none;
 }
 
 .ar-fallback-actions {

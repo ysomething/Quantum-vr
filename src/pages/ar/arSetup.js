@@ -30,7 +30,43 @@ function addARLighting(scene) {
   scene.add(key, violet, cyan);
 }
 
-export function createARSession({ container, imageTargetSrc, onFrame, visualConfig = AR_CONFIG.visual } = {}) {
+function createCameraFallbackWrapper() {
+  const mediaDevices = navigator.mediaDevices;
+  const originalGetUserMedia = mediaDevices?.getUserMedia?.bind(mediaDevices);
+  if (!mediaDevices || !originalGetUserMedia) return null;
+
+  try {
+    mediaDevices.getUserMedia = async (constraints) => {
+      try {
+        return await originalGetUserMedia(constraints);
+      } catch (primaryError) {
+        if (!constraints?.video) throw primaryError;
+
+        try {
+          return await originalGetUserMedia({ video: true, audio: false });
+        } catch (fallbackError) {
+          fallbackError.primaryError = primaryError;
+          throw fallbackError;
+        }
+      }
+    };
+
+    return () => {
+      mediaDevices.getUserMedia = originalGetUserMedia;
+    };
+  } catch (error) {
+    console.warn('Camera fallback wrapper could not be installed.', error);
+    return null;
+  }
+}
+
+export function createARSession({
+  container,
+  imageTargetSrc,
+  onFrame,
+  visualConfig = AR_CONFIG.visual,
+  cameraDeviceId = null,
+} = {}) {
   let currentVisualConfig = visualConfig;
   const mindarThree = new MindARThree({
     container,
@@ -38,10 +74,12 @@ export function createARSession({ container, imageTargetSrc, onFrame, visualConf
     maxTrack: 1,
     uiLoading: 'no',
     uiScanning: 'no',
+    uiError: 'no',
     filterMinCF: 0.0001,
     filterBeta: 1000,
     warmupTolerance: 5,
     missTolerance: 8,
+    environmentDeviceId: cameraDeviceId || null,
   });
 
   const { renderer, scene, camera } = mindarThree;
@@ -88,7 +126,12 @@ export function createARSession({ container, imageTargetSrc, onFrame, visualConf
     async start() {
       if (running) return;
       clock.start();
-      await mindarThree.start();
+      const restoreCameraFallback = createCameraFallbackWrapper();
+      try {
+        await mindarThree.start();
+      } finally {
+        restoreCameraFallback?.();
+      }
       renderer.setAnimationLoop(renderFrame);
       running = true;
       resize();

@@ -108,13 +108,40 @@ GitHub Pages 地址通常是：
 https://ysomething.github.io/Quantum-vr/
 ```
 
-常见流程：
+线上访问地址：
+
+```txt
+https://ysomething.github.io/Quantum-vr/
+```
+
+本地运行：
+
+```bash
+npm install
+npm run dev -- --host 0.0.0.0
+```
+
+构建：
 
 ```bash
 npm run build
 ```
 
-然后将 `dist/` 发布到 GitHub Pages。正式展示二维码应指向：
+部署：
+
+```bash
+npm run deploy
+```
+
+生成二维码：
+
+```bash
+npm run qr -- --url "https://ysomething.github.io/Quantum-vr/"
+```
+
+如果仓库名改变，需要同步修改 `vite.config.js` 里的 `base`。例如部署到 `https://ysomething.github.io/Quantum-vr/` 时，生产 base 应为 `/Quantum-vr/`；如果部署到用户主页仓库 `ysomething.github.io`，base 应为 `/`。
+
+GitHub Pages 必须使用 HTTPS，AR 摄像头模式才更稳定。正式展示二维码应指向：
 
 ```txt
 https://ysomething.github.io/Quantum-vr/
