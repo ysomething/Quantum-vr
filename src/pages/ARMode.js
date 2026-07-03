@@ -46,6 +46,34 @@ const FALLBACK_CAMERA_CONSTRAINTS = {
   audio: false,
 };
 
+const ACTIVE_AR_STATES = new Set([
+  'checkingCamera',
+  'loadingTarget',
+  'starting',
+  'scanning',
+  'found',
+  'lost',
+  'targetError',
+  'insecureContext',
+  'cameraError',
+  'modelError',
+]);
+
+const ERROR_AR_STATES = new Set([
+  'targetError',
+  'insecureContext',
+  'cameraError',
+  'modelError',
+]);
+
+function isActiveArState(state) {
+  return ACTIVE_AR_STATES.has(state);
+}
+
+function isErrorArState(state) {
+  return ERROR_AR_STATES.has(state);
+}
+
 function renderShell() {
   const page = document.createElement('section');
   page.className = 'mode-page ar-mode-page';
@@ -180,7 +208,7 @@ function setStageStatusVisible(page, visible) {
 function setTargetFoundUi(page, targetFound) {
   page.classList.toggle('is-target-found', targetFound);
   by(page, '[data-ar-stage]')?.classList.toggle('is-target-found', targetFound);
-  setStageStatusVisible(page, !targetFound);
+  setStageStatusVisible(page, false);
 
   if (targetFound) {
     by(page, '[data-scan-overlay]')?.classList.add('is-hidden');
@@ -192,12 +220,51 @@ function setTargetFoundUi(page, targetFound) {
   }
 }
 
+function applyArStateDisplay(page, state) {
+  const active = isActiveArState(state);
+  const found = state === 'found';
+  const lost = state === 'lost';
+  const error = isErrorArState(state);
+  const startScreen = by(page, '[data-start-screen]');
+  const stage = by(page, '[data-ar-stage]');
+  const scanOverlay = by(page, '[data-scan-overlay]');
+  const loading = by(page, '[data-loading]');
+  const drawer = by(page, '[data-ar-drawer]');
+  const backdrop = by(page, '[data-ar-drawer-backdrop]');
+
+  page.classList.toggle('is-ar-active', active);
+  page.classList.toggle('is-ar-idle', state === 'idle');
+  page.classList.toggle('is-ar-scanning', active && !found && !error);
+  page.classList.toggle('is-target-found', found);
+  page.classList.toggle('is-ar-lost', lost);
+  page.classList.toggle('is-ar-error', error);
+
+  if (startScreen) startScreen.hidden = active;
+  if (stage) {
+    stage.hidden = !active;
+    stage.classList.toggle('is-active', active);
+    stage.classList.toggle('is-target-found', found);
+  }
+  if (scanOverlay) {
+    scanOverlay.classList.toggle('is-hidden', !active || found || error);
+  }
+  if (loading && (state === 'idle' || found || error || lost || state === 'scanning')) {
+    loading.hidden = true;
+  }
+  if (found || error || !active) {
+    if (drawer) drawer.hidden = true;
+    if (backdrop) backdrop.hidden = true;
+    by(page, '[data-ar-menu]')?.setAttribute('aria-expanded', 'false');
+  }
+}
+
 function setState(page, state) {
   page.dataset.arState = state;
+  applyArStateDisplay(page, state);
   const message = STATUS_TEXT[state] || STATUS_TEXT.scanning;
   by(page, '[data-scan-message]').textContent = message;
   setDebugStatus(page, `状态：${message}`);
-  setStageStatusVisible(page, state !== 'found');
+  setStageStatusVisible(page, false);
 }
 
 function setDebugStatus(page, message, isError = false) {
@@ -208,7 +275,7 @@ function setDebugStatus(page, message, isError = false) {
 }
 
 function setLoading(page, title, message, progress = null) {
-  by(page, '[data-loading]').hidden = false;
+  by(page, '[data-loading]').hidden = true;
   by(page, '[data-loading-title]').textContent = title;
   by(page, '[data-loading-text]').textContent = message;
   if (typeof progress === 'number') {
@@ -227,7 +294,7 @@ function showError(page, message, state = 'cameraError') {
   setState(page, state);
   by(page, '[data-error-message]').textContent = message;
   by(page, '[data-error]').hidden = false;
-  by(page, '[data-scan-overlay]').classList.remove('is-hidden');
+  by(page, '[data-scan-overlay]').classList.add('is-hidden');
   setDebugStatus(page, `状态：${STATUS_TEXT[state] || '启动失败'}${message ? `：${message}` : ''}`, true);
 }
 
@@ -439,7 +506,6 @@ export async function mount(app, { navigate }) {
       setTargetFoundUi(page, false);
       setState(page, 'lost');
       by(page, '[data-scan-overlay]').classList.remove('is-hidden');
-      showToast(page, STATUS_TEXT.lost, 1800);
     };
   }
 
@@ -564,7 +630,6 @@ export async function mount(app, { navigate }) {
         showToast(page, STATUS_TEXT.found, 2000);
       } else {
         setState(page, 'scanning');
-        showToast(page, '摄像头已启动，请对准量子纠缠识别图。', 2200);
       }
     } catch (error) {
       console.error(error);
