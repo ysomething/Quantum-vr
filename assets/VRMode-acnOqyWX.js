@@ -1,4 +1,4 @@
-import{l as $,c as H,C as N,M as q}from"./hotspots-CwBebEZX.js";import{c as z,V as _,a as Q,b as K,d as W,e as X,f as j,g as J,h as Y,i as Z}from"./labUi-BjH6HYtM.js";import{g as tt}from"./runtimeConfig-bT2k2tCC.js";import{d as at,c as et}from"./index-Dt9GLkS_.js";function ot(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page vr-mode-page",o.innerHTML=`
+import{l as $,c as H,C as N,M as q}from"./hotspots-CwBebEZX.js";import{c as z,V as _,a as Q,b as K,d as W,e as X,f as j,g as J,h as Y,i as Z}from"./labUi-BjH6HYtM.js";import{g as tt}from"./runtimeConfig-bT2k2tCC.js";import{d as at,c as et}from"./index-ChngwVAU.js";function ot(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page vr-mode-page",o.innerHTML=`
     <canvas class="scene-canvas lab-scene-canvas" aria-label="量子纠缠实验室 VR 沉浸展示"></canvas>
     <div class="ambient-haze" aria-hidden="true"></div>
 
