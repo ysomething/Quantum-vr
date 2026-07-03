@@ -660,6 +660,13 @@ input:focus-visible {
   text-align: center;
   backdrop-filter: blur(14px);
   pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+}
+
+.ar-debug-status--stage.is-transient-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
 }
 
 .ar-fallback-actions {
@@ -721,6 +728,22 @@ input:focus-visible {
 
 .ar-scan-overlay.is-hidden {
   display: none;
+}
+
+.ar-mode-page.is-target-found .ar-start-screen,
+.ar-mode-page.is-target-found .ar-scan-overlay,
+.ar-mode-page.is-target-found .ar-bottom-actions,
+.ar-mode-page.is-target-found .ar-debug-status--stage {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ar-mode-page.is-target-found .ar-topbar {
+  border-color: rgba(94, 231, 255, 0.12);
+  background: rgba(3, 13, 30, 0.22);
+  box-shadow: 0 10px 34px rgba(0, 8, 26, 0.14);
+  backdrop-filter: blur(10px);
 }
 
 .scan-frame {
@@ -2280,7 +2303,7 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
   .mobile-best-view {
     position: absolute;
     right: calc(max(12px, env(safe-area-inset-right)) + 2px);
-    bottom: calc(max(82px, env(safe-area-inset-bottom) + 76px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
     min-height: 34px;
     padding: 0 0.78rem;
     border-radius: 999px;
@@ -2291,19 +2314,22 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
   .mobile-bottom-hint {
     position: absolute;
     left: 50%;
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 2px);
-    max-width: 82vw;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+    width: min(92vw, 420px);
+    max-width: calc(100vw - 32px);
+    max-height: 22dvh;
+    overflow-y: auto;
     margin: 0;
-    padding: 0.55rem 0.82rem;
+    padding: 12px 14px;
     border: 1px solid rgba(124, 226, 255, 0.14);
-    border-radius: 999px;
+    border-radius: 18px;
     background: rgba(4, 11, 25, 0.48);
     box-shadow: 0 12px 30px rgba(0, 8, 26, 0.26);
     color: rgba(226, 244, 255, 0.78);
-    font-size: 0.78rem;
-    line-height: 1;
+    font-size: 13px;
+    line-height: 1.35;
     text-align: center;
-    white-space: nowrap;
+    white-space: normal;
     backdrop-filter: blur(14px);
     animation: mobileHintFade 3.2s ease forwards;
     pointer-events: none;
@@ -2458,12 +2484,12 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
 
   .lab-mode-page .hotspot-card {
     right: calc(max(12px, env(safe-area-inset-right)));
-    bottom: calc(max(64px, env(safe-area-inset-bottom) + 54px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
     left: calc(max(12px, env(safe-area-inset-left)));
     width: auto;
-    max-height: 25dvh;
+    max-height: 22dvh;
     overflow: auto;
-    padding: 0.78rem 0.88rem;
+    padding: 12px 14px;
     border-radius: 16px;
   }
 
@@ -2478,12 +2504,12 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
 
   .lab-mode-page .spatial-panel {
     right: calc(max(12px, env(safe-area-inset-right)));
-    bottom: calc(max(62px, env(safe-area-inset-bottom) + 52px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
     left: calc(max(12px, env(safe-area-inset-left)));
     width: auto;
     max-height: 22dvh;
     overflow: auto;
-    padding: 0.82rem 0.92rem;
+    padding: 12px 14px;
     border-radius: 16px;
     opacity: 0.86;
     transform: translateY(10px) scale(0.985);
@@ -2581,13 +2607,25 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
   .toast,
   .lab-mode-page .toast {
     right: calc(max(12px, env(safe-area-inset-right)));
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 2px);
     left: calc(max(12px, env(safe-area-inset-left)));
     max-width: none;
     padding: 0.62rem 0.82rem;
     border-radius: 16px;
     font-size: 0.8rem;
     text-align: center;
+  }
+
+  .toast {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  }
+
+  .lab-mode-page .toast {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+    transform: translateY(8px);
+  }
+
+  .lab-mode-page .toast.is-visible {
+    transform: translateY(0);
   }
 
   .ar-mode-page .hotspot-card {
@@ -2637,11 +2675,13 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
 
 @media (max-width: 768px) and (orientation: landscape) {
   .mobile-bottom-hint {
-    bottom: calc(max(10px, env(safe-area-inset-bottom)));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 58px);
+    width: min(86vw, 380px);
+    max-height: 28dvh;
   }
 
   .mobile-best-view {
-    bottom: calc(max(52px, env(safe-area-inset-bottom) + 42px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
   }
 
   .mobile-drawer,
@@ -2657,7 +2697,13 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
 
   .lab-mode-page .spatial-panel {
     left: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
     width: min(380px, 48vw);
     max-height: 34dvh;
+  }
+
+  .lab-mode-page .hotspot-card,
+  .lab-mode-page .toast {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
   }
 }

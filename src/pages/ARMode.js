@@ -172,11 +172,32 @@ function showToast(page, message, duration = 2200) {
   toast._timer = window.setTimeout(() => toast.classList.remove('is-visible'), duration);
 }
 
+function setStageStatusVisible(page, visible) {
+  const stageStatus = by(page, '.ar-debug-status--stage');
+  stageStatus?.classList.toggle('is-transient-hidden', !visible);
+}
+
+function setTargetFoundUi(page, targetFound) {
+  page.classList.toggle('is-target-found', targetFound);
+  by(page, '[data-ar-stage]')?.classList.toggle('is-target-found', targetFound);
+  setStageStatusVisible(page, !targetFound);
+
+  if (targetFound) {
+    by(page, '[data-scan-overlay]')?.classList.add('is-hidden');
+    const drawer = by(page, '[data-ar-drawer]');
+    const backdrop = by(page, '[data-ar-drawer-backdrop]');
+    if (drawer) drawer.hidden = true;
+    if (backdrop) backdrop.hidden = true;
+    by(page, '[data-ar-menu]')?.setAttribute('aria-expanded', 'false');
+  }
+}
+
 function setState(page, state) {
   page.dataset.arState = state;
   const message = STATUS_TEXT[state] || STATUS_TEXT.scanning;
   by(page, '[data-scan-message]').textContent = message;
   setDebugStatus(page, `状态：${message}`);
+  setStageStatusVisible(page, state !== 'found');
 }
 
 function setDebugStatus(page, message, isError = false) {
@@ -202,6 +223,7 @@ function hideLoading(page) {
 
 function showError(page, message, state = 'cameraError') {
   hideLoading(page);
+  setTargetFoundUi(page, false);
   setState(page, state);
   by(page, '[data-error-message]').textContent = message;
   by(page, '[data-error]').hidden = false;
@@ -369,6 +391,7 @@ export async function mount(app, { navigate }) {
   }
 
   async function stopSession() {
+    setTargetFoundUi(page, false);
     calibrationHelpers?.dispose();
     calibrationHelpers = null;
     hotspots?.dispose?.();
@@ -402,7 +425,7 @@ export async function mount(app, { navigate }) {
       calibrationHelpers?.setVisible(calibrationUi?.isOpen() ?? false);
       hideLoading(page);
       setState(page, 'found');
-      by(page, '[data-scan-overlay]').classList.add('is-hidden');
+      setTargetFoundUi(page, true);
       showToast(page, STATUS_TEXT.found, 2000);
     };
 
@@ -413,6 +436,7 @@ export async function mount(app, { navigate }) {
       hotspots?.setEnabled(false);
       calibrationHelpers?.setVisible(false);
       if (session) session.content.visible = false;
+      setTargetFoundUi(page, false);
       setState(page, 'lost');
       by(page, '[data-scan-overlay]').classList.remove('is-hidden');
       showToast(page, STATUS_TEXT.lost, 1800);
@@ -426,6 +450,7 @@ export async function mount(app, { navigate }) {
     by(page, '[data-start-screen]').hidden = true;
     by(page, '[data-ar-stage]').hidden = false;
     by(page, '[data-ar-stage]').classList.add('is-active');
+    setTargetFoundUi(page, false);
     by(page, '[data-scan-overlay]').classList.remove('is-hidden');
     hideError(page);
     setState(page, 'checkingCamera');
@@ -486,6 +511,11 @@ export async function mount(app, { navigate }) {
       session.content.visible = false;
       session.content.updateMatrixWorld(true);
 
+      if (targetVisible) {
+        model.setVisible(true);
+        session.content.visible = true;
+      }
+
       effects = createQuantumAREffects({
         anchorGroup: session.content,
         modelRoot: model.root,
@@ -528,8 +558,14 @@ export async function mount(app, { navigate }) {
       });
 
       hideLoading(page);
-      setState(page, targetVisible ? 'found' : 'scanning');
-      showToast(page, '摄像头已启动，请对准量子纠缠识别图。', 2200);
+      if (targetVisible) {
+        setState(page, 'found');
+        setTargetFoundUi(page, true);
+        showToast(page, STATUS_TEXT.found, 2000);
+      } else {
+        setState(page, 'scanning');
+        showToast(page, '摄像头已启动，请对准量子纠缠识别图。', 2200);
+      }
     } catch (error) {
       console.error(error);
       stopProbeStream(cameraProbe?.stream);

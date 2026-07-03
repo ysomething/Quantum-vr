@@ -9,7 +9,7 @@ export const AR_CONFIG = {
   model: {
     scale: 0.058,
     position: { x: 0, y: -0.04, z: 0.14 },
-    rotation: { x: Math.PI / 3, y: -0.08, z: -Math.PI / 10 },
+    rotation: { x: Math.PI / 3, y: -0.08, z: Math.PI / 2 - Math.PI / 10 },
   },
   visual: {
     bloomStrength: 0.4,
@@ -32,7 +32,7 @@ export const AR_CONFIG = {
     textPosition: { x: 0.22, y: -0.28, z: 0.38 },
   },
   calibration: {
-    storageKey: 'quantum-showcase-ar-config-v2',
+    storageKey: 'quantum-showcase-ar-config-v3',
     lowBrightnessKey: 'quantum-showcase-ar-low-brightness-v1',
   },
 };

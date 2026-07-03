@@ -255,3 +255,50 @@ npm run compile-target
 - WebXR 真 VR 取决于浏览器、HTTPS 和设备支持；不支持时请使用普通沉浸、体感或 3D 展示模式。
 - WebAR 摄像头权限在部分微信环境中可能受系统策略影响，可尝试右上角菜单选择“在浏览器打开”。
 - 3D / VR 手机端保持高质量视觉配置；AR 模式单独使用低曝光配置，避免摄像头画面被光效盖住。
+
+## 修改后自动部署规则
+
+从现在开始，本项目每次完成任何源码、样式、资源或配置修改后，都必须同步完成线上部署流程，不允许只修改本地版本后停下。
+
+固定流程：
+
+1. 仅在依赖变化或 `node_modules` 不完整时执行 `npm install`。
+2. 重新生成线上二维码，二维码必须指向 HTTPS 统一首页：
+
+   ```bash
+   npm run qr -- --url "https://ysomething.github.io/Quantum-vr/"
+   ```
+
+3. 执行 `npm run build`，构建失败必须先修复，不能部署失败版本。
+4. 提交源码到 `main`：
+
+   ```bash
+   git add .
+   git commit -m "Update interactive showcase"
+   git push origin main
+   ```
+
+   如果确实没有源码改动可提交，可以跳过 commit，但需要在交付说明里明确说明。
+
+5. 部署 `dist` 到 GitHub Pages：
+
+   ```bash
+   npm run deploy
+   ```
+
+6. 部署后检查：
+
+   ```txt
+   https://ysomething.github.io/Quantum-vr/
+   https://ysomething.github.io/Quantum-vr/#/3d
+   https://ysomething.github.io/Quantum-vr/#/vr
+   https://ysomething.github.io/Quantum-vr/#/ar
+   ```
+
+7. 如发现 `models`、`targets`、`draco`、`qr` 等 public 资源 404，必须修复 `import.meta.env.BASE_URL` 相关路径后重新构建并重新部署。
+
+注意：
+
+- 二维码必须指向线上 HTTPS 首页，不要指向 `localhost`，也不要直接指向 `#/ar`。
+- GitHub Pages 仓库名改变时，需要同步修改 `vite.config.js` 中的生产 `base`。
+- AR 摄像头体验以 HTTPS 线上地址为准，手机微信局域网 HTTP 测试可能无法调起摄像头。
