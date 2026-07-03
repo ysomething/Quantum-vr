@@ -3,38 +3,38 @@ import * as THREE from 'three';
 export const HOTSPOT_DEFINITIONS = [
   {
     id: 'laser',
-    label: '405nm 泵浦光源',
-    description: '405nm 激光为 BBO 晶体提供泵浦光。',
+    label: '405nm 激光器',
+    description: '泵浦光源向 BBO 晶体注入能量，是纠缠光子对产生的起点。',
     anchor: 'laser',
-    offset: [0, 0.45, 0],
+    offset: [0, 0.5, 0],
   },
   {
     id: 'bbo',
     label: 'BBO 晶体',
-    description: '自发参量下转换，产生纠缠光子对。',
+    description: '自发参量下转换在这里发生，一个泵浦光子转化为一对纠缠光子。',
     anchor: 'bbo',
-    offset: [0, 0.5, 0],
+    offset: [0, 0.55, 0],
   },
   {
     id: 'polarizer',
-    label: '偏振片',
-    description: '选择测量基，用于比较不同偏振关联。',
+    label: '偏振分析器',
+    description: '选择测量基，比较不同偏振角度下两路光子的关联强度。',
     anchor: 'polarizer',
-    offset: [0, 0.44, 0],
+    offset: [0, 0.52, 0],
   },
   {
     id: 'apd',
-    label: 'APD',
-    description: '单光子探测器，记录左右两路光子事件。',
+    label: 'APD 探测器',
+    description: '雪崩光电二极管记录单光子事件，左右两路结果进入符合计数。',
     anchor: 'apd',
-    offset: [0, 0.42, 0],
+    offset: [0, 0.48, 0],
   },
   {
     id: 'counter',
     label: '符合计数器',
-    description: '统计符合事件并计算 S 值。',
+    description: '统计同时探测到的事件并计算贝尔参数 S，高潮阶段显示 S = 2.52。',
     anchor: 'counter',
-    offset: [0, 0.46, 0],
+    offset: [0, 0.52, 0],
   },
 ];
 
@@ -46,13 +46,22 @@ export function createHotspots({ camera, anchors, layer, card, closeButton }) {
   const projected = new THREE.Vector3();
   const world = new THREE.Vector3();
   let activeId = null;
-  let enabled = false;
-  let centerFocusTimer = 0;
-  let centerFocusId = null;
+  let enabled = true;
+  let autoCloseTimer = null;
+
+  function clearAutoClose() {
+    window.clearTimeout(autoCloseTimer);
+    autoCloseTimer = null;
+  }
+
+  function isMobileViewport() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
 
   function open(definition) {
+    clearAutoClose();
     activeId = definition.id;
-    kicker.textContent = 'AR 空间热点';
+    kicker.textContent = '实验装置';
     title.textContent = definition.label;
     description.textContent = definition.description;
     card.classList.add('is-open');
@@ -61,9 +70,13 @@ export function createHotspots({ camera, anchors, layer, card, closeButton }) {
       marker.element.classList.toggle('is-active', marker.definition.id === definition.id);
       marker.element.setAttribute('aria-expanded', marker.definition.id === definition.id ? 'true' : 'false');
     }
+    if (isMobileViewport()) {
+      autoCloseTimer = window.setTimeout(close, 3000);
+    }
   }
 
   function close() {
+    clearAutoClose();
     activeId = null;
     card.classList.remove('is-open');
     card.setAttribute('aria-hidden', 'true');
@@ -82,75 +95,82 @@ export function createHotspots({ camera, anchors, layer, card, closeButton }) {
     element.dataset.hotspot = definition.id;
     element.setAttribute('aria-label', `${definition.label}：${definition.description}`);
     element.setAttribute('aria-expanded', 'false');
-    element.innerHTML = `<span>${definition.label}</span>`;
+    const label = document.createElement('span');
+    label.textContent = definition.label;
+    element.append(label);
     element.addEventListener('click', () => {
       if (activeId === definition.id) close();
       else open(definition);
     });
+    element.addEventListener('pointerenter', () => {
+      if (window.matchMedia('(hover: hover)').matches) open(definition);
+    });
     layer.append(element);
-    markers.push({ definition, anchor, element, offset: new THREE.Vector3(...definition.offset), screenDistance: Infinity });
+    markers.push({ definition, anchor, element, offset: new THREE.Vector3(...definition.offset) });
   }
 
-  function update(delta = 0) {
+  function update() {
     if (!enabled) return;
     camera.updateMatrixWorld();
-
-    let nearest = null;
     for (const marker of markers) {
       marker.anchor.getWorldPosition(world);
       world.add(marker.offset);
       projected.copy(world).project(camera);
       const behindCamera = projected.z < -1 || projected.z > 1;
-      const outside = Math.abs(projected.x) > 1.15 || Math.abs(projected.y) > 1.15;
+      const outside = Math.abs(projected.x) > 1.12 || Math.abs(projected.y) > 1.12;
       marker.element.classList.toggle('is-hidden', behindCamera || outside);
-      marker.screenDistance = Infinity;
       if (behindCamera || outside) continue;
-
       const rawX = (projected.x * 0.5 + 0.5) * window.innerWidth;
       const y = (-projected.y * 0.5 + 0.5) * window.innerHeight;
       const markerWidth = marker.element.offsetWidth || 124;
-      const x = THREE.MathUtils.clamp(rawX, 14, window.innerWidth - markerWidth - 14);
+      const x = THREE.MathUtils.clamp(rawX, 18, window.innerWidth - markerWidth - 18);
       marker.element.style.left = `${x}px`;
-      marker.element.style.top = `${THREE.MathUtils.clamp(y, 76, window.innerHeight - 96)}px`;
+      marker.element.style.top = `${THREE.MathUtils.clamp(y, 72, window.innerHeight - 90)}px`;
       marker.element.style.zIndex = String(Math.round((1 - projected.z) * 10) + 4);
-
-      marker.screenDistance = Math.hypot(projected.x, projected.y);
-      if (!nearest || marker.screenDistance < nearest.screenDistance) nearest = marker;
-    }
-
-    if (!activeId && nearest && nearest.screenDistance < 0.16) {
-      if (centerFocusId !== nearest.definition.id) {
-        centerFocusId = nearest.definition.id;
-        centerFocusTimer = 0;
-      }
-      centerFocusTimer += delta;
-      if (centerFocusTimer > 1.1) open(nearest.definition);
-    } else if (!nearest || nearest.screenDistance > 0.22) {
-      centerFocusId = null;
-      centerFocusTimer = 0;
     }
   }
 
-  closeButton.addEventListener('click', close);
-  document.addEventListener('keydown', (event) => {
+  function setEnabled(value) {
+    enabled = value;
+    layer.hidden = !value;
+    if (!value) close();
+  }
+
+  function focus(id) {
+    const marker = markers.find((item) => item.definition.id === id);
+    if (marker) open(marker.definition);
+  }
+
+  function getTargets() {
+    return markers.map((marker) => ({
+      id: marker.definition.id,
+      label: marker.definition.label,
+      description: marker.definition.description,
+      anchor: marker.anchor,
+      offset: marker.offset.clone(),
+    }));
+  }
+
+  const keydown = (event) => {
     if (event.key === 'Escape') close();
-  });
+  };
+  closeButton.addEventListener('click', close);
+  document.addEventListener('keydown', keydown);
 
   return {
     update,
-    open(id) {
-      const marker = markers.find((item) => item.definition.id === id);
-      if (marker) open(marker.definition);
-    },
+    open: focus,
     close,
-    setEnabled(value) {
-      enabled = value;
-      layer.hidden = !value;
-      for (const marker of markers) marker.element.classList.toggle('is-hidden', !value);
-      if (!value) close();
-    },
+    setEnabled,
+    getTargets,
     get count() {
       return markers.length;
+    },
+    dispose() {
+      clearAutoClose();
+      document.removeEventListener('keydown', keydown);
+      closeButton.removeEventListener('click', close);
+      for (const marker of markers) marker.element.remove();
     },
   };
 }

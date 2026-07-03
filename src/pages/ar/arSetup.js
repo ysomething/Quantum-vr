@@ -1,38 +1,37 @@
 import * as THREE from 'three';
-import { MindARThree } from './vendor/mind-ar/mindar-image-three.prod.js';
-import { AR_CONFIG } from './config.js';
+import { MindARThree } from '../../vendor/mind-ar/mindar-image-three.prod.js';
+import { AR_CONFIG } from './arConfig.js';
+import { applyOutputColorSpace, setSafePixelRatio } from '../../shared/threeCompat.js';
+import { getRuntimeConfig } from '../../shared/runtimeConfig.js';
 
-function setRendererDefaults(renderer, container) {
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, AR_CONFIG.maxPixelRatio);
-  renderer.setPixelRatio(pixelRatio);
-  renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight);
-  if ('outputColorSpace' in renderer && THREE.SRGBColorSpace) {
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-  } else if ('outputEncoding' in renderer && THREE.sRGBEncoding) {
-    renderer.outputEncoding = THREE.sRGBEncoding;
-  }
+function applyRendererVisuals(renderer, visualConfig = AR_CONFIG.visual) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = visualConfig.exposure ?? AR_CONFIG.visual.exposure;
+}
+
+function setRendererDefaults(renderer, container, visualConfig = AR_CONFIG.visual) {
+  const runtime = getRuntimeConfig();
+  const maxPixelRatio = Math.min(runtime.pixelRatioMax || 2, 1.5);
+  setSafePixelRatio(renderer, maxPixelRatio);
+  renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight);
+  applyOutputColorSpace(renderer);
+  applyRendererVisuals(renderer, visualConfig);
   renderer.shadowMap.enabled = false;
 }
 
 function addARLighting(scene) {
-  scene.add(new THREE.HemisphereLight(0xdff8ff, 0x10172f, 2.4));
-
-  const key = new THREE.DirectionalLight(0x9fefff, 2.2);
+  scene.add(new THREE.HemisphereLight(0xdff8ff, 0x10172f, 1.45));
+  const key = new THREE.DirectionalLight(0x9fefff, 1.35);
   key.position.set(1.6, 3.2, 2.4);
-  scene.add(key);
-
-  const violet = new THREE.PointLight(0x8c6dff, 2.2, 5.5, 2);
+  const violet = new THREE.PointLight(0x8c6dff, 0.85, 5.5, 2);
   violet.position.set(-1.4, 0.8, 1.7);
-  scene.add(violet);
-
-  const cyan = new THREE.PointLight(0x45eaff, 1.8, 4.2, 2);
+  const cyan = new THREE.PointLight(0x45eaff, 0.75, 4.2, 2);
   cyan.position.set(1.2, -0.9, 1.5);
-  scene.add(cyan);
+  scene.add(key, violet, cyan);
 }
 
-export function createARSession({ container, imageTargetSrc, onFrame } = {}) {
+export function createARSession({ container, imageTargetSrc, onFrame, visualConfig = AR_CONFIG.visual } = {}) {
+  let currentVisualConfig = visualConfig;
   const mindarThree = new MindARThree({
     container,
     imageTargetSrc,
@@ -46,12 +45,12 @@ export function createARSession({ container, imageTargetSrc, onFrame } = {}) {
   });
 
   const { renderer, scene, camera } = mindarThree;
-  setRendererDefaults(renderer, container);
+  setRendererDefaults(renderer, container, currentVisualConfig);
   addARLighting(scene);
 
   const anchor = mindarThree.addAnchor(0);
   const content = new THREE.Group();
-  content.name = 'quantum_wechat_webar_anchor_content';
+  content.name = 'quantum_ar_anchor_content';
   content.visible = false;
   anchor.group.add(content);
 
@@ -66,7 +65,7 @@ export function createARSession({ container, imageTargetSrc, onFrame } = {}) {
   }
 
   function resize() {
-    setRendererDefaults(renderer, container);
+    setRendererDefaults(renderer, container, currentVisualConfig);
   }
 
   window.addEventListener('resize', resize);
@@ -79,6 +78,10 @@ export function createARSession({ container, imageTargetSrc, onFrame } = {}) {
     camera,
     anchor,
     content,
+    applyVisualConfig(nextVisualConfig = AR_CONFIG.visual) {
+      currentVisualConfig = nextVisualConfig;
+      applyRendererVisuals(renderer, currentVisualConfig);
+    },
     setFrameCallback(callback) {
       frameCallback = callback;
     },
@@ -92,9 +95,7 @@ export function createARSession({ container, imageTargetSrc, onFrame } = {}) {
     },
     async stop() {
       renderer.setAnimationLoop(null);
-      if (running) {
-        await mindarThree.stop();
-      }
+      if (running) await mindarThree.stop();
       running = false;
     },
     dispose() {

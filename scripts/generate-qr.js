@@ -2,30 +2,26 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import QRCode from 'qrcode';
 
-function getArgValue(name) {
-  const index = process.argv.indexOf(name);
+function readUrlArg() {
+  const index = process.argv.indexOf('--url');
   if (index >= 0 && process.argv[index + 1]) return process.argv[index + 1];
-  const inline = process.argv.find((item) => item.startsWith(`${name}=`));
-  if (inline) return inline.slice(name.length + 1);
-  return null;
+  return process.env.SHOWCASE_URL || 'https://你的部署地址/';
 }
 
-const url = getArgValue('--url') || 'http://局域网IP:5173/';
-const output = getArgValue('--out') || 'public/qr/wechat_webar_qr.png';
-const outputPath = path.resolve(process.cwd(), output);
+const url = readUrlArg();
+const outputDir = path.resolve('public/qr');
+const outputFile = path.join(outputDir, 'showcase_qr.png');
 
-await fs.mkdir(path.dirname(outputPath), { recursive: true });
-
-await QRCode.toFile(outputPath, url, {
-  type: 'png',
-  width: 1024,
-  margin: 2,
+await fs.mkdir(outputDir, { recursive: true });
+await QRCode.toFile(outputFile, url, {
   errorCorrectionLevel: 'H',
+  margin: 2,
+  width: 960,
   color: {
-    dark: '#07101fff',
-    light: '#f4fcffff',
+    dark: '#071427',
+    light: '#ffffff',
   },
 });
 
-console.log(`QR generated: ${output}`);
+console.log(`QR generated: ${outputFile}`);
 console.log(`URL: ${url}`);

@@ -2,94 +2,22 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#040a17" />
     <meta
       name="description"
-      content="微信扫码进入 WebAR 页面，对准量子纠缠识别图后，在图像上方显示 3D 量子纠缠实验室。"
+      content="量子纠缠交互实验室：整合 3D 展示、VR 沉浸和微信扫码 WebAR 图像识别体验。"
     />
-    <meta name="theme-color" content="#050812" />
-    <title>量子纠缠 AR 实验室</title>
+    <meta property="og:title" content="量子纠缠交互实验室" />
+    <meta
+      property="og:description"
+      content="从三维实验台、手机沉浸导览到 MindAR 图像识别，探索贝尔不等式的实验验证。"
+    />
+    <title>量子纠缠交互实验室</title>
   </head>
-  <body data-ar-state="idle">
-    <main id="app-shell" class="app-shell">
-      <section id="start-screen" class="start-screen" aria-labelledby="start-title">
-        <div class="start-orbit" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <p class="eyebrow">WeChat WebAR · Image Tracking</p>
-        <h1 id="start-title">量子纠缠 AR 实验室</h1>
-        <p class="start-copy">请允许摄像头权限，并将镜头对准量子纠缠识别图。识别成功后，3D 实验装置会从图像上方浮现。</p>
-        <div class="start-actions">
-          <button id="start-scan" class="primary-action" type="button">开始扫描</button>
-          <button id="open-help-from-start" class="ghost-action" type="button">如何体验？</button>
-        </div>
-        <p class="permission-note">微信内置浏览器要求摄像头权限由点击触发；本页不会在打开时自动拉起摄像头。</p>
-      </section>
-
-      <section id="ar-stage" class="ar-stage" aria-label="量子纠缠 WebAR 扫描画面">
-        <div id="ar-container" class="ar-container"></div>
-
-        <header class="ar-topbar">
-          <div>
-            <p class="ar-kicker">quantum</p>
-            <h2>量子纠缠 AR 实验室</h2>
-          </div>
-          <nav class="ar-actions" aria-label="AR 操作">
-            <button id="rescan" type="button">重新扫描</button>
-            <button id="open-help" type="button">帮助</button>
-          </nav>
-        </header>
-
-        <div id="scan-overlay" class="scan-overlay" aria-live="polite">
-          <div class="scan-frame" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <p id="scan-message">请将镜头对准量子纠缠识别图</p>
-        </div>
-
-        <div id="loading-panel" class="loading-panel" aria-live="polite" hidden>
-          <div class="loading-line"><span id="loading-bar"></span></div>
-          <p id="loading-text">正在启动 AR 扫描…</p>
-        </div>
-
-        <div id="toast" class="toast" role="status" aria-live="polite"></div>
-        <div id="error-panel" class="error-panel" role="alert" hidden>
-          <h3>扫描暂时不可用</h3>
-          <p id="error-message"></p>
-          <button id="retry-after-error" type="button">重新尝试</button>
-        </div>
-
-        <div id="hotspot-layer" class="hotspot-layer" hidden></div>
-        <aside id="hotspot-card" class="hotspot-card" aria-hidden="true">
-          <button id="hotspot-close" class="hotspot-close" type="button" aria-label="关闭热点说明">×</button>
-          <p id="hotspot-kicker">实验装置</p>
-          <h3 id="hotspot-title">405nm 泵浦光源</h3>
-          <p id="hotspot-description">纠缠光子实验的入射激光。</p>
-        </aside>
-      </section>
-
-      <dialog id="help-dialog" class="help-dialog">
-        <form method="dialog">
-          <button class="dialog-close" type="submit" aria-label="关闭帮助">×</button>
-        </form>
-        <p class="eyebrow">How to scan</p>
-        <h2>如何体验？</h2>
-        <ol>
-          <li>用微信扫描二维码打开页面。</li>
-          <li>点击“开始扫描”并允许摄像头权限。</li>
-          <li>将镜头对准量子纠缠识别图。</li>
-          <li>识别成功后，3D 量子实验室会出现在图片上方。</li>
-          <li>缓慢移动手机，可以从不同角度观察实验装置。</li>
-        </ol>
-        <p class="help-footnote">正式展示建议使用 HTTPS 域名；本地调试可使用 localhost 或同一局域网 IP。</p>
-      </dialog>
-    </main>
-
+  <body>
+    <a class="skip-link" href="#app">跳到主要内容</a>
+    <div id="app" class="app-root"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
