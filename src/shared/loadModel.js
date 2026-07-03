@@ -41,7 +41,7 @@ function getLightSourceRole(name = '') {
   }
   if (/bbo_inner|bbo_crystal|bbo_spark|crystal/.test(lower)) return 'bbo';
   if (/405|pump|laser_beam|beam|laser_path/.test(lower)) return 'laserBeam';
-  if (/photon_path|photon_[ab]|entangled_photon|path_a|path_b/.test(lower)) return 'photonPath';
+  if (/photon_path|photon_[ab]|entangled_photon|entangled|spdc|path_a|path_b|correlation/.test(lower)) return 'photonPath';
   if (/glowing_window|counter_screen|apd_flash/.test(lower)) return 'detector';
   return null;
 }
@@ -59,7 +59,7 @@ function roleIntensityMultiplier(role, visual) {
     case 'laserEmitterShell':
       return visual.laserEmitterIntensity ?? 0.18;
     case 'laserEmitterAperture':
-      return Math.max(visual.laserEmitterIntensity ?? 0.18, 0.38);
+      return visual.laserEmitterApertureIntensity ?? Math.max(visual.laserEmitterIntensity ?? 0.18, 0.38);
     case 'photonPath':
       return visual.photonPathIntensity ?? 0.82;
     case 'detector':
@@ -78,7 +78,9 @@ function roleOpacityMultiplier(role, visual) {
     case 'laserEmitterShell':
       return visual.laserEmitterGlowOpacity ?? 0.08;
     case 'laserEmitterAperture':
-      return Math.max(visual.laserEmitterGlowOpacity ?? 0.08, 0.28);
+      return visual.laserEmitterApertureGlowOpacity ?? Math.max(visual.laserEmitterGlowOpacity ?? 0.08, 0.28);
+    case 'photonPath':
+      return visual.photonPathGlowOpacity ?? visual.photonTrailOpacity ?? 1;
     default:
       return 1;
   }
@@ -94,10 +96,14 @@ const MODEL_VISUAL_CONTROL_KEYS = [
   'laserBeamGlowOpacity',
   'laserEmitterIntensity',
   'laserEmitterGlowOpacity',
+  'laserEmitterApertureIntensity',
+  'laserEmitterApertureGlowOpacity',
   'laserEmitterColor',
   'bboIntensity',
   'bboGlowOpacity',
   'photonPathIntensity',
+  'photonPathGlowOpacity',
+  'photonTrailOpacity',
   'detectorGlowIntensity',
   'bboInternalLightMaxIntensity',
 ];
@@ -306,10 +312,13 @@ function enhanceRuntimeGlow(root) {
     laserBeamGlowOpacity: 0.42,
     laserEmitterIntensity: 0.18,
     laserEmitterGlowOpacity: 0.08,
+    laserEmitterApertureIntensity: 0.38,
+    laserEmitterApertureGlowOpacity: 0.28,
     laserEmitterColor: 0xd2dbe4,
     bboIntensity: 0.46,
     bboGlowOpacity: 0.44,
     photonPathIntensity: 0.82,
+    photonTrailOpacity: 1,
     detectorGlowIntensity: 0.86,
   };
 
