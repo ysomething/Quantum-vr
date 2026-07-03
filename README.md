@@ -92,6 +92,34 @@ npm run qr -- --url "http://192.168.1.23:5173/"
 
 二维码不会硬编码固定 IP。每次换网络或部署地址后，重新运行上面的命令即可。
 
+## 部署到 GitHub Pages
+
+当前仓库推荐用 `gh-pages` 分支发布静态文件。推送到 `main` 后，`.github/workflows/deploy-pages.yml` 会自动执行：
+
+1. `npm ci`
+2. `npm run compile-target`
+3. `npm run build`
+4. 将 `dist` 内容发布到 `gh-pages` 分支
+
+GitHub Pages 地址：
+
+```text
+https://ysomething.github.io/Quantum-vr/
+```
+
+如果是第一次启用 Pages，请在 GitHub 仓库里进入：
+
+```text
+Settings → Pages → Build and deployment → Source: Deploy from a branch
+```
+
+然后选择：
+
+```text
+Branch: gh-pages
+Folder: / (root)
+```
+
 ## 替换识别图 target
 
 WebAR 不是扫描二维码后直接出现模型；二维码只负责打开网页。真正触发 AR 的是摄像头识别 `public/targets/target.mind` 对应的图片。
