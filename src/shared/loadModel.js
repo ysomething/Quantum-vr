@@ -462,18 +462,21 @@ function loadWithProgress(loader, url, onProgress, range) {
   });
 }
 
-export async function loadQuantumModel({ onProgress, onSourceChange } = {}) {
+export async function loadQuantumModel({ onProgress, onSourceChange, assets = MODEL_ASSETS } = {}) {
   const { loader, dracoLoader } = createGLTFLoader();
   let gltf;
   let source = 'draco';
+  const modelUrl = assets.modelUrl || MODEL_ASSETS.modelUrl;
+  const fallbackUrl = assets.fallbackUrl || assets.modelFallbackUrl || MODEL_ASSETS.fallbackUrl;
 
   try {
-    gltf = await loadWithProgress(loader, MODEL_ASSETS.modelUrl, onProgress, [0, 0.94]);
+    gltf = await loadWithProgress(loader, modelUrl, onProgress, [0, 0.94]);
   } catch (error) {
+    if (!fallbackUrl || fallbackUrl === modelUrl) throw error;
     console.warn('Compressed GLB failed, falling back to uncompressed model.', error);
     source = 'uncompressed';
     onSourceChange?.(source);
-    gltf = await loadWithProgress(loader, MODEL_ASSETS.fallbackUrl, onProgress, [0.08, 0.94]);
+    gltf = await loadWithProgress(loader, fallbackUrl, onProgress, [0.08, 0.94]);
   } finally {
     dracoLoader.dispose();
   }
@@ -485,7 +488,7 @@ export async function loadQuantumModel({ onProgress, onSourceChange } = {}) {
   return {
     ...prepared,
     source,
-    modelUrl: source === 'draco' ? MODEL_ASSETS.modelUrl : MODEL_ASSETS.fallbackUrl,
+    modelUrl: source === 'draco' ? modelUrl : fallbackUrl,
   };
 }
 

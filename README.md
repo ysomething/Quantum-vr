@@ -202,7 +202,11 @@ AR 页面保留：
 - 微信扫码打开
 - 点击“开始扫描”后再请求摄像头
 - MindAR 图片识别
+- AR 专用动态模型：`public/models/scene12_13_ar.glb`
 - `public/targets/target.mind`
+- 触发图源文件：`public/targets/target-source.png`
+- 真实摄像头背景叠加，不使用黑底场景
+- 较小尺寸的平视 / 45° 斜视动态实验台，加载后自动播放 GLB 动画
 - GLB 加载与 Draco 解码
 - 识别成功提示
 - 重新扫描按钮

@@ -672,7 +672,12 @@ input:focus-visible {
 .ar-stage {
   position: absolute;
   inset: 0;
-  background: #000;
+  background: transparent;
+}
+
+.ar-mode-page,
+.ar-container {
+  background: transparent;
 }
 
 .ar-container video,
@@ -682,6 +687,15 @@ input:focus-visible {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
+}
+
+.ar-container video {
+  z-index: 0;
+}
+
+.ar-container canvas {
+  z-index: 1;
+  background: transparent !important;
 }
 
 .ar-topbar {
@@ -702,7 +716,7 @@ input:focus-visible {
   display: grid;
   place-items: center;
   pointer-events: none;
-  background: radial-gradient(circle, transparent 0 34%, rgba(0, 0, 0, 0.35) 64%);
+  background: radial-gradient(circle, transparent 0 42%, rgba(0, 0, 0, 0.12) 72%);
 }
 
 .ar-scan-overlay.is-hidden {

@@ -291,7 +291,7 @@ function mapStartupError(error) {
   if (error?.code === 'TARGET_MISSING' || /target\.mind|image target|compile/i.test(message)) {
     return `${STATUS_TEXT.targetError} 请确认 ${AR_CONFIG.assets.imageTargetSrc} 可以访问。${detail ? ` 错误：${detail}` : ''}`;
   }
-  if (error?.code === 'MODEL_MISSING' || /scene12_13_vr|GLB|gltf|model/i.test(message)) {
+  if (error?.code === 'MODEL_MISSING' || /scene12_13_(vr|ar)|GLB|gltf|model/i.test(message)) {
     return `${STATUS_TEXT.modelError}${detail ? ` 错误：${detail}` : ''}`;
   }
   if (/camera|permission|NotAllowed|NotFound|NotReadable|getUserMedia|Requested device|Permission/i.test(message + detail)) {
@@ -465,6 +465,10 @@ export async function mount(app, { navigate }) {
       wireTargetCallbacks(session.anchor);
 
       const modelPromise = loadQuantumModel({
+        assets: {
+          modelUrl: AR_CONFIG.assets.modelUrl,
+          fallbackUrl: AR_CONFIG.assets.modelFallbackUrl,
+        },
         onProgress(progress) {
           setLoading(page, '加载 3D 模型', `正在加载量子实验室 ${Math.round(progress * 100)}%`, 0.22 + progress * 0.42);
         },

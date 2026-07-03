@@ -2,12 +2,14 @@ export const AR_CONFIG = {
   assets: {
     imageTargetSrc: `${import.meta.env.BASE_URL}targets/target.mind`,
     targetPreviewSrc: `${import.meta.env.BASE_URL}targets/target-source.png`,
-    targetAspect: 820 / 1200,
+    modelUrl: `${import.meta.env.BASE_URL}models/scene12_13_ar.glb`,
+    modelFallbackUrl: `${import.meta.env.BASE_URL}models/scene12_13_ar.glb`,
+    targetAspect: 1,
   },
   model: {
-    scale: 0.092,
-    position: { x: 0, y: -0.05, z: 0.04 },
-    rotation: { x: Math.PI / 2, y: 0, z: 0 },
+    scale: 0.058,
+    position: { x: 0, y: -0.04, z: 0.14 },
+    rotation: { x: Math.PI / 3, y: -0.08, z: -Math.PI / 10 },
   },
   visual: {
     bloomStrength: 0.4,
@@ -30,7 +32,7 @@ export const AR_CONFIG = {
     textPosition: { x: 0.22, y: -0.28, z: 0.38 },
   },
   calibration: {
-    storageKey: 'quantum-showcase-ar-config-v1',
+    storageKey: 'quantum-showcase-ar-config-v2',
     lowBrightnessKey: 'quantum-showcase-ar-low-brightness-v1',
   },
 };

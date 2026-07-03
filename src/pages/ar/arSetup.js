@@ -14,6 +14,9 @@ function setRendererDefaults(renderer, container, visualConfig = AR_CONFIG.visua
   const maxPixelRatio = Math.min(runtime.pixelRatioMax || 2, 1.5);
   setSafePixelRatio(renderer, maxPixelRatio);
   renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+  renderer.setClearAlpha?.(0);
+  renderer.domElement.style.background = 'transparent';
   applyOutputColorSpace(renderer);
   applyRendererVisuals(renderer, visualConfig);
   renderer.shadowMap.enabled = false;
@@ -84,6 +87,7 @@ export function createARSession({
 
   const { renderer, scene, camera } = mindarThree;
   setRendererDefaults(renderer, container, currentVisualConfig);
+  scene.background = null;
   addARLighting(scene);
 
   const anchor = mindarThree.addAnchor(0);
