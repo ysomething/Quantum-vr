@@ -1,6 +1,6 @@
 import { describeRuntime, getRuntimeConfig } from '../shared/runtimeConfig.js';
 
-const desktopCards = [
+const modeCards = [
   {
     route: '/3d',
     eyebrow: 'Mode 01',
@@ -30,14 +30,30 @@ const desktopCards = [
     mobileAction: '开始 AR 扫描',
     recommended: true,
   },
+  {
+    route: '/demo/photon',
+    eyebrow: 'Demo 01',
+    title: '双光子纠缠 Demo',
+    description: '调节泵浦光、补偿、偏振角与符合窗口，观察符合计数和 S 值变化。',
+    action: '进入双光子 Demo',
+  },
+  {
+    route: '/demo/three',
+    eyebrow: 'Demo 02',
+    title: '3D Demo',
+    description: '打开 demo 的 3D 交互页面，补充展示实验路径与三维演示内容。',
+    action: '进入 3D Demo',
+  },
 ];
 
 function getCards(runtime) {
-  if (!runtime.isMobile) return desktopCards;
+  if (!runtime.isMobile) return modeCards;
   return [
-    desktopCards.find((card) => card.route === '/ar'),
-    desktopCards.find((card) => card.route === '/3d'),
-    desktopCards.find((card) => card.route === '/vr'),
+    modeCards.find((card) => card.route === '/ar'),
+    modeCards.find((card) => card.route === '/3d'),
+    modeCards.find((card) => card.route === '/vr'),
+    modeCards.find((card) => card.route === '/demo/photon'),
+    modeCards.find((card) => card.route === '/demo/three'),
   ];
 }
 

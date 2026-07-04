@@ -8,14 +8,82 @@ D:\code\finally\quantum-entanglement-interactive-showcase
 
 3D 与 VR 模式以 `scene12-13-vr-real-vr` 版本为视觉母版，AR 模式使用 MindAR 图像识别实现微信扫码体验。
 
-系统保留统一首页，通过 Hash 路由进入三个模式：
+系统保留统一首页，通过 Hash 路由进入三个展示模式与两个 Demo 页面：
 
 - `#/home`：统一首页
 - `#/3d`：3D 展示模式
 - `#/vr`：VR / 手机沉浸模式
 - `#/ar`：MindAR 图像识别扫描模式
+- `#/demo/photon`：双光子纠缠 Demo
+- `#/demo/three`：3D Demo
 
 二维码建议始终指向首页，而不是直接指向某一个模式页面。这样评委扫码后可以先看到模式选择，并在 AR 摄像头权限失败时快速切到 3D 展示模式。
+
+## Demo 子应用集成说明
+
+集成来源：
+
+```txt
+https://github.com/ysomething/quantum-entanglement-demo
+```
+
+当前项目将该 demo 作为静态子应用构建后复制到：
+
+```txt
+public/embedded-demo
+```
+
+主项目通过 iframe 嵌入子应用，不把 demo 的 React / Tailwind / Three.js 依赖混入当前 Three.js / VR / AR 主项目，以避免依赖冲突、CSS 污染和路由冲突。
+
+新增主项目路由：
+
+```txt
+#/demo/photon
+#/demo/three
+```
+
+首页新增入口：
+
+- 双光子纠缠 Demo
+- 3D Demo
+
+更新 demo 子应用的方法：
+
+```bash
+git clone https://github.com/ysomething/quantum-entanglement-demo.git D:\code\finally\_external\quantum-entanglement-demo
+cd D:\code\finally\_external\quantum-entanglement-demo
+npm install
+npm run build
+```
+
+如果本地 clone 已存在，可在该目录中执行 `git pull --ff-only` 后重新构建。构建前需确认 demo 的 Vite `base` 使用相对路径：
+
+```js
+base: './'
+```
+
+然后清空并复制：
+
+```txt
+D:\code\finally\_external\quantum-entanglement-demo\dist
+```
+
+到：
+
+```txt
+D:\code\finally\quantum-entanglement-interactive-showcase\public\embedded-demo
+```
+
+复制后重新构建和部署主项目：
+
+```bash
+npm run build
+npm run deploy
+```
+
+注意：demo 的 Vite `base` 必须使用 `./`，否则嵌入到 `https://ysomething.github.io/Quantum-vr/embedded-demo/` 这类 GitHub Pages 子路径时，JS/CSS 资源可能 404。
+
+命名注意：demo 第二个页面是 3D Demo，不是三光子页面。所有用户可见文案中都不要出现“三光子”，统一写作“3D Demo”。
 
 ## 评委手机扫码体验说明
 

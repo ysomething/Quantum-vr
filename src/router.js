@@ -5,6 +5,8 @@ const routes = {
   '/3d': () => import('./pages/ThreeDMode.js'),
   '/vr': () => import('./pages/VRMode.js'),
   '/ar': () => import('./pages/ARMode.js'),
+  '/demo/photon': () => import('./pages/DemoPhotonPage.js'),
+  '/demo/three': () => import('./pages/DemoThreePage.js'),
 };
 
 let currentPage = null;
