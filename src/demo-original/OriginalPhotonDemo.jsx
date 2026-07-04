@@ -410,8 +410,8 @@ export default function OriginalPhotonDemo() {
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
+        <section className="grid gap-4">
+          <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Slider label="泵浦光功率" min={5} max={100} value={pumpPower} onChange={setPumpPower} suffix="%" />
               <Slider label="光路对准程度" min={20} max={100} value={alignment} onChange={setAlignment} suffix="%" />
@@ -427,17 +427,6 @@ export default function OriginalPhotonDemo() {
               </span>
               <input type="checkbox" checked={compensated} onChange={(e) => setCompensated(e.target.checked)} className="h-6 w-6 accent-slate-900" />
             </label>
-          </div>
-
-          <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <h2 className="text-lg font-bold">微视频讲解脚本提示</h2>
-            <div className="mt-4 space-y-4 text-sm leading-6 text-slate-600">
-              <p><b>镜头一：</b>让紫色泵浦光进入 BBO，强调“不是每个光子都会下转换，SPDC 概率很低”。</p>
-              <p><b>镜头二：</b>打开光锥，说明实验不是到处接光，而是在两个光锥的交线方向取出一对不可区分路径。</p>
-              <p><b>镜头三：</b>切换“关闭补偿”，展示可见度和 |S| 下降，再打开补偿，说明半波片和辅 BBO 的作用。</p>
-              <p><b>镜头四：</b>转动 P₂ 角度，让符合计数曲线振荡，说明纠缠体现在“两路联合统计”，不是单路亮暗。</p>
-              <p><b>镜头五：</b>点“CHSH 角度”，用 |S| &gt; 2 作为收尾：实验结果不能由局域隐变量模型解释。</p>
-            </div>
           </div>
         </section>
 

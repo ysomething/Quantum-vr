@@ -56,16 +56,20 @@ const shadowFixes = `
     }
 
     .original-photon-visual {
-      overflow-x: auto;
-      overflow-y: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: calc(100% + 2rem);
+      margin-inline: -1rem;
+      overflow: hidden;
       border-radius: 1rem;
-      -webkit-overflow-scrolling: touch;
     }
 
     .original-photon-svg {
-      width: max(860px, 100%);
+      width: 100%;
       height: auto;
-      min-height: 420px;
+      min-height: 0;
+      aspect-ratio: 1050 / 520;
     }
 
     .original-photon-demo button,
@@ -119,8 +123,8 @@ const shadowFixes = `
 
   @media (max-width: 480px) {
     .original-photon-svg {
-      width: max(780px, 100%);
-      min-height: 390px;
+      width: 100%;
+      min-height: 0;
     }
 
     .original-three-stage-card {
