@@ -1,4 +1,4 @@
-import{l as Q,c as q,C as K,V as x,M as j}from"./hotspots-BkZJaBOZ.js";import{c as W,T as L,a as X,b as J,d as Y,e as Z,f as tt,g as et,h as at,i as ot}from"./labUi-BiycXtZK.js";import{g as nt}from"./runtimeConfig-bT2k2tCC.js";import{d as it,c as st}from"./index-J0iP4DaJ.js";function dt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page three-d-mode-page",o.innerHTML=`
+import{l as Q,c as q,C as K,V as x,M as j}from"./hotspots-BkZJaBOZ.js";import{c as W,T as L,a as X,b as J,d as Y,e as Z,f as tt,g as et,h as at,i as ot}from"./labUi-BiycXtZK.js";import{g as nt}from"./runtimeConfig-bT2k2tCC.js";import{d as it,c as st}from"./index-CMB8lXcN.js";function dt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page three-d-mode-page",o.innerHTML=`
     <canvas class="scene-canvas lab-scene-canvas" aria-label="量子纠缠实验室 3D 展示"></canvas>
     <div class="ambient-haze" aria-hidden="true"></div>
 
