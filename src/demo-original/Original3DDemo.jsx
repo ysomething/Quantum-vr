@@ -345,24 +345,6 @@ export default function Original3DDemo({ onBackToPhoton }) {
     crystalLabel.position.set(-2.05, -0.58, 0);
     scene.add(crystalLabel);
 
-    const coneMaterial = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.07,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    const upperCone = new THREE.Mesh(new THREE.ConeGeometry(1.0, 2.2, 64, 1, true), coneMaterial);
-    upperCone.position.set(-0.8, 0.06, 0.68);
-    upperCone.rotation.z = Math.PI / 2;
-    upperCone.rotation.y = -0.36;
-    scene.add(upperCone);
-    const lowerCone = upperCone.clone();
-    lowerCone.position.z = -0.68;
-    lowerCone.rotation.y = 0.36;
-    scene.add(lowerCone);
-
     const upperPolarizer = createPolarizer("偏振片 A", upperCurve.getPoint(0.56), upperCurve.getTangent(0.56), 0x67e8f9);
     const lowerPolarizer = createPolarizer("偏振片 B", lowerCurve.getPoint(0.56), lowerCurve.getTangent(0.56), 0xa7f3d0);
     scene.add(upperPolarizer.group, upperPolarizer.label, lowerPolarizer.group, lowerPolarizer.label);

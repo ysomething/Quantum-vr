@@ -12,6 +12,17 @@ const shadowFixes = `
   .original-demo-route {
     min-width: 0;
     min-height: 100%;
+    height: auto;
+    overflow: visible;
+    touch-action: pan-y;
+  }
+
+  .original-photon-demo,
+  .original-three-demo {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+    touch-action: pan-y;
   }
 
   .original-open-three {
@@ -33,7 +44,10 @@ const shadowFixes = `
 
   @media (max-width: 768px) {
     .original-photon-demo {
+      height: auto;
       min-height: auto;
+      overflow: visible;
+      touch-action: pan-y;
       padding: 1rem 0.75rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
     }
 
@@ -79,9 +93,12 @@ const shadowFixes = `
     }
 
     .original-three-layout {
+      height: auto;
       min-height: auto;
+      overflow: visible;
       align-items: start;
       padding: 0.75rem;
+      touch-action: pan-y;
     }
 
     .original-three-stage-card {
@@ -94,7 +111,9 @@ const shadowFixes = `
     }
 
     .original-three-controls {
+      overflow: visible;
       padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+      touch-action: pan-y;
     }
   }
 
@@ -131,6 +150,9 @@ export async function mountOriginalDemoPage(app, { navigate }, { title, descript
   page.className = "original-demo-page";
   let disposed = false;
   let reactRoot = null;
+
+  document.documentElement.classList.add("demo-page-active");
+  document.body.classList.add("demo-page-active");
 
   page.innerHTML = `
     <header class="original-demo-header">
@@ -187,6 +209,8 @@ export async function mountOriginalDemoPage(app, { navigate }, { title, descript
     dispose() {
       disposed = true;
       reactRoot?.unmount();
+      document.documentElement.classList.remove("demo-page-active");
+      document.body.classList.remove("demo-page-active");
       page.remove();
     },
   };
