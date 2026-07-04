@@ -306,27 +306,6 @@ input:focus-visible {
   border-radius: var(--radius-lg);
 }
 
-.mode-card.is-recommended {
-  position: relative;
-  border-color: rgba(94, 231, 255, 0.5);
-  background:
-    linear-gradient(150deg, rgba(17, 52, 78, 0.76), rgba(8, 19, 42, 0.66)),
-    radial-gradient(circle at 80% 0%, rgba(94, 231, 255, 0.18), transparent 42%);
-}
-
-.mode-card.is-recommended::after {
-  position: absolute;
-  top: 0.9rem;
-  right: 0.9rem;
-  content: "手机推荐";
-  padding: 0.25rem 0.48rem;
-  border: 1px solid rgba(94, 231, 255, 0.35);
-  border-radius: 999px;
-  color: var(--cyan);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-}
-
 .mode-card h2 {
   margin: 0;
   font-size: clamp(1.5rem, 3vw, 2rem);

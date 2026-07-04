@@ -20,7 +20,6 @@ const QUALITY_BASE = {
   antialias: true,
   defaultPerformanceMode: 'quality',
   preferLowBrightnessAR: false,
-  mobileHomeRecommended: false,
 };
 
 const MOBILE = {
@@ -30,7 +29,6 @@ const MOBILE = {
   isMobile: true,
   antialias: true,
   preferLowBrightnessAR: true,
-  mobileHomeRecommended: true,
 };
 
 export function getRuntimeConfig() {
