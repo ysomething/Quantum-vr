@@ -1,4 +1,4 @@
-import{C as H,M as N}from"./three.module-CbQKnzqj.js";import{c as q,V as _,a as z,b as Q,d as K,e as W,f as X,g as j,h as J,i as Y}from"./labUi-Bg0x_GBh.js";import{l as Z,c as tt}from"./hotspots-B40VPf0H.js";import{g as at}from"./runtimeConfig-bT2k2tCC.js";import{d as et,c as ot}from"./index-CvRVANkZ.js";import"./OrbitControls-CMV-iHXY.js";function nt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page vr-mode-page",o.innerHTML=`
+import{C as H,M as N}from"./three.module-CbQKnzqj.js";import{c as q,V as _,a as z,b as Q,d as K,e as W,f as X,g as j,h as J,i as Y}from"./labUi-Bg0x_GBh.js";import{l as Z,c as tt}from"./hotspots-B40VPf0H.js";import{g as at}from"./runtimeConfig-bT2k2tCC.js";import{d as et,c as ot}from"./index-DWFwLX2j.js";import"./OrbitControls-CMV-iHXY.js";function nt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page vr-mode-page",o.innerHTML=`
     <canvas class="scene-canvas lab-scene-canvas" aria-label="量子纠缠实验室 VR 沉浸展示"></canvas>
     <div class="ambient-haze" aria-hidden="true"></div>
 
