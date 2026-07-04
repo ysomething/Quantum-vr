@@ -1,4 +1,4 @@
-import{C as Q,V as x,M as q}from"./three.module-CbQKnzqj.js";import{c as K,T as L,a as j,b as W,d as X,e as J,f as Y,g as Z,h as tt,i as et}from"./labUi-Bg0x_GBh.js";import{l as at,c as ot}from"./hotspots-B40VPf0H.js";import{g as nt}from"./runtimeConfig-bT2k2tCC.js";import{d as it,c as st}from"./index-DY9Lx8fv.js";import"./OrbitControls-CMV-iHXY.js";function dt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page three-d-mode-page",o.innerHTML=`
+import{C as Q,V as x,M as q}from"./three.module-CbQKnzqj.js";import{c as K,T as L,a as j,b as W,d as X,e as J,f as Y,g as Z,h as tt,i as et}from"./labUi-Bg0x_GBh.js";import{l as at,c as ot}from"./hotspots-B40VPf0H.js";import{g as nt}from"./runtimeConfig-bT2k2tCC.js";import{d as it,c as st}from"./index-CF670fst.js";import"./OrbitControls-CMV-iHXY.js";function dt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page three-d-mode-page",o.innerHTML=`
     <canvas class="scene-canvas lab-scene-canvas" aria-label="量子纠缠实验室 3D 展示"></canvas>
     <div class="ambient-haze" aria-hidden="true"></div>
 

@@ -1,0 +1,1 @@
+import{m as n}from"./originalDemoPage-CNyDdKfk.js";import"./index-CF670fst.js";async function e(o,t){return n(o,t,{kind:"photon",title:"双光子纠缠 Demo",description:"源码级集成原版 2D Demo，保留原版光路动画、参数控制、符合计数和 S 值交互。"})}export{e as mount};
