@@ -1,0 +1,43 @@
+{
+  "report_version": "chsh_fit_report_v1",
+  "generated_at": "2026-07-04T11:00:14.995023+00:00",
+  "workbook": "data\\量子纠缠网页计数_CHSH拟合数据包.xlsx",
+  "sheets_used": {
+    "raw_counts": "02原始长表",
+    "chsh_calculation": "03CHSH计算",
+    "fit_parameters": "04拟合参数",
+    "web_recommended_data": "05网页数据",
+    "angle_curve": "06角度曲线"
+  },
+  "fitted_parameters": [
+    "visibility",
+    "phaseDeg",
+    "offset",
+    "C0",
+    "accidental",
+    "detectorGains.pp/pm/mp/mm",
+    "singles.darkA/darkB",
+    "singles.etaA/etaB",
+    "response pump/alignment/filter/window/noise coefficients"
+  ],
+  "training_data_S": {
+    "web_default": 2.428205243781959,
+    "low_count_alignment": 2.101580470577885,
+    "high_rate_background": 2.2549364236688874,
+    "literature_undergrad": 2.307,
+    "literature_high_visibility": 2.653,
+    "classical_control": 1.8
+  },
+  "fitted_default_S": 2.4282052437819583,
+  "rmse": {
+    "E": 0.000990704884883592,
+    "counts": 1.4871137219235344
+  },
+  "reference_scope": "用户实测数据用于网页默认与低计数/高背景范围；文献和商用演示数据只用于教学参考，不作为本实验实测默认值。",
+  "applicability": "模型适用于课程演示中的近似连续调参：泵浦、对准、补偿、滤光片带宽、符合窗口、背景噪声在网页滑块范围内变化。它不是正式实验误差分析，也不替代原始计数表。",
+  "notes": [
+    "关联函数采用可解释谐波模型 E(thetaA, thetaB)=offset+V*(u*cos(2x)+v*sin(2x))。",
+    "x 的 sum/difference 约定由最小 RMSE 自动选择。",
+    "CHSH S 在网页端由四组角度的 E 值实时组合，不再使用固定场景卡片。"
+  ]
+}

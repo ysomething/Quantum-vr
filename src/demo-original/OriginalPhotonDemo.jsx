@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { DEFAULT_CHSH_FIT_MODEL, PRESET_ORDER, predictCounts } from "./model/chshPredictor.js";
 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const deg = (x) => (x * Math.PI) / 180;
@@ -36,127 +37,6 @@ const STEPS = [
     desc: "两路 APD 把光子转为电脉冲。符合计数器只在时间窗口 τ 内同时到达的脉冲记为一对。窗口太小会漏计，太大则偶然符合增多。",
   },
 ];
-
-const CHSH_TERMS = ["E00", "E01", "E10", "E11"];
-
-const CHSH_SCENARIOS = {
-  web_default: {
-    label: "网页默认：用户实测补偿较好",
-    shortLabel: "默认实测",
-    S: 2.428205243781959,
-    sigmaS: 0.013518631351179849,
-    visibility: 0.8585001969954783,
-    totalPerSetting: 660,
-    note: "推荐写入网页默认计数；兼顾真实波动与明显违反。",
-    source: "用户上传Excel",
-    measurements: {
-      E00: { a: 0, b: 22.5, nPP: 65, nPM: 265, nMP: 265, nMM: 65, singlesA: 5288, singlesB: 5667, accidental: 7.9 },
-      E01: { a: 0, b: 67.5, nPP: 265, nPM: 65, nMP: 65, nMM: 265, singlesA: 5282, singlesB: 5663, accidental: 7.9 },
-      E10: { a: 45, b: 22.5, nPP: 265, nPM: 65, nMP: 65, nMM: 265, singlesA: 5283, singlesB: 5669, accidental: 7.9 },
-      E11: { a: 45, b: 67.5, nPP: 265, nPM: 65, nMP: 65, nMM: 265, singlesA: 5268, singlesB: 5668, accidental: 7.9 },
-    },
-  },
-  low_count_alignment: {
-    label: "初调/低计数：刚超过经典上限",
-    shortLabel: "初调/低计数",
-    S: 2.101580470577885,
-    sigmaS: 0.025814279333066455,
-    visibility: 0.7430209009774189,
-    totalPerSetting: 210,
-    note: "适合做“调光/补偿前后对比”。",
-    source: "用户上传Excel",
-    measurements: {
-      E00: { a: 0, b: 22.5, nPP: 25, nPM: 80, nMP: 80, nMM: 25, singlesA: 1679, singlesB: 1803, accidental: 2.5 },
-      E01: { a: 0, b: 67.5, nPP: 80, nPM: 25, nMP: 25, nMM: 80, singlesA: 1680, singlesB: 1809, accidental: 2.5 },
-      E10: { a: 45, b: 22.5, nPP: 80, nPM: 25, nMP: 25, nMM: 80, singlesA: 1678, singlesB: 1803, accidental: 2.5 },
-      E11: { a: 45, b: 67.5, nPP: 80, nPM: 25, nMP: 25, nMM: 80, singlesA: 1678, singlesB: 1803, accidental: 2.5 },
-    },
-  },
-  high_rate_background: {
-    label: "高计数/背景影响：S略下降",
-    shortLabel: "高计数/背景",
-    S: 2.2549364236688874,
-    sigmaS: 0.010476392196477214,
-    visibility: 0.7972404181604059,
-    totalPerSetting: 1180,
-    note: "适合教学展示多光子/背景/误差对S的影响。",
-    source: "用户上传Excel",
-    measurements: {
-      E00: { a: 0, b: 22.5, nPP: 129, nPM: 461, nMP: 461, nMM: 129, singlesA: 9437, singlesB: 10134, accidental: 14.2 },
-      E01: { a: 0, b: 67.5, nPP: 461, nPM: 129, nMP: 129, nMM: 461, singlesA: 9462, singlesB: 10139, accidental: 14.2 },
-      E10: { a: 45, b: 22.5, nPP: 461, nPM: 129, nMP: 129, nMM: 461, singlesA: 9422, singlesB: 10152, accidental: 14.2 },
-      E11: { a: 45, b: 67.5, nPP: 461, nPM: 129, nMP: 129, nMM: 461, singlesA: 9417, singlesB: 10160, accidental: 14.2 },
-    },
-  },
-  classical_control: {
-    label: "经典对照：不违反 S≈1.80",
-    shortLabel: "经典对照",
-    S: 1.8,
-    sigmaS: 0.04,
-    visibility: 0.6363961030678927,
-    totalPerSetting: 660,
-    note: "用于网页切换“局域实在模型/无纠缠对照”。",
-    source: "教学合成；经典上限S≤2",
-    measurements: {
-      E00: { a: 0, b: 22.5, nPP: 91, nPM: 239, nMP: 239, nMM: 91, singlesA: 5283, singlesB: 5668, accidental: 7.9 },
-      E01: { a: 0, b: 67.5, nPP: 239, nPM: 91, nMP: 91, nMM: 239, singlesA: 5292, singlesB: 5677, accidental: 7.9 },
-      E10: { a: 45, b: 22.5, nPP: 239, nPM: 91, nMP: 91, nMM: 239, singlesA: 5271, singlesB: 5666, accidental: 7.9 },
-      E11: { a: 45, b: 67.5, nPP: 239, nPM: 91, nMP: 91, nMM: 239, singlesA: 5276, singlesB: 5665, accidental: 7.9 },
-    },
-  },
-  literature_high_visibility: {
-    label: "文献/商用演示：高可见度 S≈2.65–2.70",
-    shortLabel: "高可见度参考",
-    S: 2.653,
-    sigmaS: 0.027,
-    visibility: 0.9379771452439553,
-    totalPerSetting: 1000,
-    note: "高质量纠缠源可达到的演示水平，不建议作为本实验默认值。",
-    source: "https://arxiv.org/abs/0904.3245 ; qutools QuED sample experiments",
-    measurements: {
-      E00: { a: 0, b: 22.5, nPP: 84, nPM: 416, nMP: 416, nMM: 84, singlesA: 8013, singlesB: 8602, accidental: 12 },
-      E01: { a: 0, b: 67.5, nPP: 416, nPM: 84, nMP: 84, nMM: 416, singlesA: 7995, singlesB: 8601, accidental: 12 },
-      E10: { a: 45, b: 22.5, nPP: 416, nPM: 84, nMP: 84, nMM: 416, singlesA: 7993, singlesB: 8593, accidental: 12 },
-      E11: { a: 45, b: 67.5, nPP: 416, nPM: 84, nMP: 84, nMM: 416, singlesA: 7999, singlesB: 8590, accidental: 12 },
-    },
-  },
-};
-
-const SCENARIO_ORDER = [
-  "web_default",
-  "low_count_alignment",
-  "high_rate_background",
-  "classical_control",
-  "literature_high_visibility",
-];
-
-const SCENARIO_VISUALS = {
-  web_default: { pumpPower: 72, alignment: 92, compensated: true, filterBw: 3, windowNs: 5, step: "coincidence" },
-  low_count_alignment: { pumpPower: 34, alignment: 66, compensated: true, filterBw: 4, windowNs: 6, step: "cones" },
-  high_rate_background: { pumpPower: 92, alignment: 84, compensated: true, filterBw: 7, windowNs: 10, step: "coincidence" },
-  classical_control: { pumpPower: 70, alignment: 74, compensated: false, filterBw: 3, windowNs: 5, step: "analyze" },
-  literature_high_visibility: { pumpPower: 82, alignment: 96, compensated: true, filterBw: 2, windowNs: 4, step: "analyze" },
-};
-
-const measurementTotal = (m) => m.nPP + m.nPM + m.nMP + m.nMM;
-
-const measurementE = (m) => {
-  const total = measurementTotal(m);
-  return total === 0 ? 0 : (m.nPP + m.nMM - m.nPM - m.nMP) / total;
-};
-
-const scenarioSFromCounts = (scenario) => Math.abs(
-  measurementE(scenario.measurements.E00) -
-  measurementE(scenario.measurements.E01) -
-  measurementE(scenario.measurements.E10) -
-  measurementE(scenario.measurements.E11)
-);
-
-const nearestChshTerm = (theta1, theta2) => CHSH_TERMS.reduce((best, term) => {
-  const measurement = CHSH_SCENARIOS.web_default.measurements[term];
-  const score = Math.abs(theta1 - measurement.a) + Math.abs(theta2 - measurement.b);
-  return score < best.score ? { term, score } : best;
-}, { term: "E00", score: Number.POSITIVE_INFINITY }).term;
 
 function Pill({ active, children, onClick }) {
   return (
@@ -409,64 +289,96 @@ function MiniChart({ theta1, theta2, visibility }) {
 
 export default function OriginalPhotonDemo() {
   const [step, setStep] = useState("pump");
-  const [scenarioId, setScenarioId] = useState("web_default");
-  const [chshTerm, setChshTerm] = useState("E00");
+  const [fitModel, setFitModel] = useState(DEFAULT_CHSH_FIT_MODEL);
+  const [modelStatus, setModelStatus] = useState("使用内置拟合模型");
   const [pumpPower, setPumpPower] = useState(72);
-  const [alignment, setAlignment] = useState(86);
+  const [alignment, setAlignment] = useState(92);
   const [compensated, setCompensated] = useState(true);
+  const [compensationStrength, setCompensationStrength] = useState(100);
   const [theta1, setTheta1] = useState(0);
   const [theta2, setTheta2] = useState(22.5);
   const [filterBw, setFilterBw] = useState(3);
   const [windowNs, setWindowNs] = useState(5);
+  const [noiseLevel, setNoiseLevel] = useState(2);
+  const [showFluctuation, setShowFluctuation] = useState(true);
+  const [fluctuationTick, setFluctuationTick] = useState(0);
+  const thetaAPrime = (theta1 + 45) % 180;
+  const thetaBPrime = (theta2 + 45) % 180;
 
-  const calc = useMemo(() => {
-    const scenario = CHSH_SCENARIOS[scenarioId] ?? CHSH_SCENARIOS.web_default;
-    const measurement = scenario.measurements[chshTerm] ?? scenario.measurements.E00;
-    return {
-      scenario,
-      measurement,
-      visibility: scenario.visibility,
-      accidental: measurement.accidental,
-      coincidence: measurementTotal(measurement),
-      singles1: measurement.singlesA,
-      singles2: measurement.singlesB,
-      E: measurementE(measurement),
-      S: scenario.S,
-      sigmaS: scenario.sigmaS,
-      countDerivedS: scenarioSFromCounts(scenario),
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${import.meta.env.BASE_URL}data/chsh_fit_model.json`, { cache: "no-cache" })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((model) => {
+        if (cancelled) return;
+        setFitModel(model);
+        setModelStatus("已加载 Excel 拟合模型");
+      })
+      .catch(() => {
+        if (!cancelled) setModelStatus("使用内置拟合模型");
+      });
+    return () => {
+      cancelled = true;
     };
-  }, [chshTerm, scenarioId]);
+  }, []);
+
+  useEffect(() => {
+    if (!showFluctuation) return undefined;
+    const id = window.setInterval(() => setFluctuationTick((value) => value + 1), 1200);
+    return () => window.clearInterval(id);
+  }, [showFluctuation]);
+
+  const prediction = useMemo(() => predictCounts({
+    pumpPower,
+    thetaA: theta1,
+    thetaB: theta2,
+    thetaAForS: theta1,
+    thetaAPrime,
+    thetaBForS: theta2,
+    thetaBPrime,
+    compensationEnabled: compensated,
+    compensationStrength,
+    filterBandwidth: filterBw,
+    coincidenceWindow: windowNs,
+    noiseLevel,
+    alignment,
+    fluctuationEnabled: showFluctuation,
+    fluctuationSeed: fluctuationTick,
+  }, fitModel), [
+    alignment,
+    compensated,
+    compensationStrength,
+    filterBw,
+    fitModel,
+    fluctuationTick,
+    noiseLevel,
+    pumpPower,
+    showFluctuation,
+    theta1,
+    theta2,
+    thetaAPrime,
+    thetaBPrime,
+    windowNs,
+  ]);
 
   const current = STEPS.find((s) => s.key === step) ?? STEPS[0];
 
-  const selectChshTerm = (term) => {
-    const measurement = CHSH_SCENARIOS.web_default.measurements[term] ?? CHSH_SCENARIOS.web_default.measurements.E00;
-    setChshTerm(term);
-    setTheta1(measurement.a);
-    setTheta2(measurement.b);
-    setStep("analyze");
-  };
-
-  const applyScenario = (id) => {
-    const visual = SCENARIO_VISUALS[id] ?? SCENARIO_VISUALS.web_default;
-    setScenarioId(id);
-    setPumpPower(visual.pumpPower);
-    setAlignment(visual.alignment);
-    setCompensated(visual.compensated);
-    setFilterBw(visual.filterBw);
-    setWindowNs(visual.windowNs);
-    selectChshTerm(chshTerm);
-    setStep(visual.step);
-  };
-
-  const updateTheta1 = (value) => {
-    setTheta1(value);
-    setChshTerm(nearestChshTerm(value, theta2));
-  };
-
-  const updateTheta2 = (value) => {
-    setTheta2(value);
-    setChshTerm(nearestChshTerm(theta1, value));
+  const applyPreset = (id) => {
+    const preset = fitModel.preset_inputs?.[id] ?? DEFAULT_CHSH_FIT_MODEL.preset_inputs[id];
+    if (!preset) return;
+    setPumpPower(preset.pumpPower);
+    setAlignment(preset.alignment);
+    setCompensated(preset.compensationEnabled);
+    setCompensationStrength(preset.compensationStrength);
+    setFilterBw(preset.filterBandwidth);
+    setWindowNs(preset.coincidenceWindow);
+    setNoiseLevel(preset.noiseLevel);
+    setTheta1(preset.thetaA);
+    setTheta2(preset.thetaB);
+    setStep(id === "compensation_off" ? "comp" : id === "more_background" ? "coincidence" : "analyze");
   };
 
   return (
@@ -483,29 +395,24 @@ export default function OriginalPhotonDemo() {
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">双光子纠缠实验如何运作？</h1>
             <p className="mt-2 text-sm font-medium text-slate-500">量子纠缠微视频交互演示</p>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              这个网页把真实仪器拆成六个动画环节：紫色泵浦光、BBO 中的自发参量下转换、光锥交线取光、走离补偿、偏振分析、单光子符合测量。计数、符合计数与 S 值来自上传 Excel 的 CHSH 场景数据，滑块保留光路动画演示。
+              这个网页把真实仪器拆成六个动画环节：紫色泵浦光、BBO 中的自发参量下转换、光锥交线取光、走离补偿、偏振分析、单光子符合测量。本页计数由真实实验数据拟合模型生成，滑块改变的是模型输入参数，因此 S 和符合计数会连续变化。
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-            {SCENARIO_ORDER.map((id, index) => {
-              const scenario = CHSH_SCENARIOS[id];
-              const active = scenarioId === id;
+            {PRESET_ORDER.map((id, index) => {
+              const preset = fitModel.preset_inputs?.[id] ?? DEFAULT_CHSH_FIT_MODEL.preset_inputs[id];
               return (
                 <button
                   key={id}
-                  onClick={() => applyScenario(id)}
+                  onClick={() => applyPreset(id)}
                   className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
-                    index === SCENARIO_ORDER.length - 1 ? "col-span-2" : ""
-                  } ${
-                    active
-                      ? "bg-slate-900 text-white shadow-sm"
+                    index === PRESET_ORDER.length - 1
+                      ? "col-span-2 bg-amber-50 text-amber-800 hover:bg-amber-100"
                       : "bg-slate-50 text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  <span className="block">{scenario.shortLabel}</span>
-                  <span className={`mt-1 block text-xs font-medium ${active ? "text-slate-300" : "text-slate-500"}`}>
-                    S={fmt(scenario.S, 2)}
-                  </span>
+                  <span className="block">{preset.label}</span>
+                  <span className="mt-1 block text-xs font-medium text-slate-500">快速设置滑块参数</span>
                 </button>
               );
             })}
@@ -529,94 +436,87 @@ export default function OriginalPhotonDemo() {
               theta1={theta1}
               theta2={theta2}
               filterBw={filterBw}
-              visibility={calc.visibility}
+              visibility={prediction.visibility}
             />
             <aside className="space-y-4">
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
                 <h2 className="text-lg font-bold text-slate-900">{current.title}</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{current.desc}</p>
+                <p className="mt-3 text-xs font-semibold text-indigo-700">{modelStatus}</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-slate-900 p-4 text-white">
                   <div className="text-xs text-slate-300">单路计数 APD1</div>
-                  <div className="mt-1 text-2xl font-bold tabular-nums">{Math.round(calc.singles1)}</div>
+                  <div className="mt-1 text-2xl font-bold tabular-nums">{prediction.singlesA}</div>
                   <div className="text-xs text-slate-400">counts/s</div>
                 </div>
                 <div className="rounded-2xl bg-slate-900 p-4 text-white">
                   <div className="text-xs text-slate-300">单路计数 APD2</div>
-                  <div className="mt-1 text-2xl font-bold tabular-nums">{Math.round(calc.singles2)}</div>
+                  <div className="mt-1 text-2xl font-bold tabular-nums">{prediction.singlesB}</div>
                   <div className="text-xs text-slate-400">counts/s</div>
                 </div>
                 <div className="rounded-2xl bg-cyan-50 p-4 text-cyan-900 ring-1 ring-cyan-100">
                   <div className="text-xs text-cyan-700">符合计数</div>
-                  <div className="mt-1 text-2xl font-bold tabular-nums">{Math.round(calc.coincidence)}</div>
-                  <div className="text-xs text-cyan-700">四类合计 / 设置</div>
+                  <div className="mt-1 text-2xl font-bold tabular-nums">{prediction.coincidenceCurrent}</div>
+                  <div className="text-xs text-cyan-700">当前 θ₁/θ₂</div>
+                </div>
+                <div className="rounded-2xl bg-violet-400/10 p-4 text-slate-900 ring-1 ring-violet-400/25">
+                  <div className="text-xs text-slate-600">E(θ₁, θ₂)</div>
+                  <div className="mt-1 text-2xl font-bold tabular-nums">{fmt(prediction.ECurrent, 3)}</div>
+                  <div className="text-xs text-slate-600">实时关联函数</div>
                 </div>
                 <div className="rounded-2xl bg-amber-50 p-4 text-amber-900 ring-1 ring-amber-100">
                   <div className="text-xs text-amber-700">CHSH |S|</div>
-                  <div className="mt-1 text-2xl font-bold tabular-nums">{fmt(calc.S, 2)}</div>
-                  <div className="text-xs text-amber-700">{calc.S > 2 ? "违反经典上界 2" : "未明显违反"} · σ={fmt(calc.sigmaS, 3)}</div>
+                  <div className="mt-1 text-2xl font-bold tabular-nums">{fmt(prediction.chsh.S, 2)}</div>
+                  <div className="text-xs text-amber-700">{prediction.chsh.violated ? "违反经典上界 2" : "未明显违反"} · σ={fmt(prediction.chsh.SStd, 3)}</div>
+                  <div className="mt-1 text-[11px] text-amber-700">a′/b′ 由当前角度 +45° 派生</div>
+                </div>
+                <div className="rounded-2xl bg-emerald-400/10 p-4 text-slate-900 ring-1 ring-emerald-400/25">
+                  <div className="text-xs text-slate-600">可见度 / 偶然符合</div>
+                  <div className="mt-1 text-2xl font-bold tabular-nums">{fmt(prediction.visibility, 2)}</div>
+                  <div className="text-xs text-slate-600">acc≈{fmt(prediction.accidental, 1)}</div>
                 </div>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">CHSH 数据源</div>
-                    <h3 className="mt-1 text-base font-bold text-slate-900">{calc.scenario.label}</h3>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">拟合模型实时预测</div>
+                    <h3 className="mt-1 text-base font-bold text-slate-900">四类符合计数与 CHSH 四项 E</h3>
                   </div>
                   <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tabular-nums text-slate-700">
-                    V={fmt(calc.visibility, 3)}
+                    V={fmt(prediction.visibility, 3)}
                   </div>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {CHSH_TERMS.map((term) => {
-                    const measurement = calc.scenario.measurements[term];
-                    return (
-                      <button
-                        key={term}
-                        onClick={() => selectChshTerm(term)}
-                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                          chshTerm === term
-                            ? "bg-slate-900 text-white"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        }`}
-                      >
-                        {term} · {measurement.a}°/{measurement.b}°
-                      </button>
-                    );
-                  })}
                 </div>
                 <div className="mt-4 grid grid-cols-4 gap-2 text-center">
                   <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
                     <div className="text-[11px] text-slate-500">N++</div>
-                    <div className="font-bold tabular-nums text-slate-900">{calc.measurement.nPP}</div>
+                    <div className="font-bold tabular-nums text-slate-900">{prediction.counts.pp}</div>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
                     <div className="text-[11px] text-slate-500">N+-</div>
-                    <div className="font-bold tabular-nums text-slate-900">{calc.measurement.nPM}</div>
+                    <div className="font-bold tabular-nums text-slate-900">{prediction.counts.pm}</div>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
                     <div className="text-[11px] text-slate-500">N-+</div>
-                    <div className="font-bold tabular-nums text-slate-900">{calc.measurement.nMP}</div>
+                    <div className="font-bold tabular-nums text-slate-900">{prediction.counts.mp}</div>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
                     <div className="text-[11px] text-slate-500">N--</div>
-                    <div className="font-bold tabular-nums text-slate-900">{calc.measurement.nMM}</div>
+                    <div className="font-bold tabular-nums text-slate-900">{prediction.counts.mm}</div>
                   </div>
                 </div>
-                <div className="mt-3 text-xs leading-5 text-slate-500">
-                  当前 {chshTerm}: a={calc.measurement.a}°, b={calc.measurement.b}°, E={fmt(calc.E, 3)}，偶然符合≈{fmt(calc.accidental, 1)}。
-                  四项计数推得 S≈{fmt(calc.countDerivedS, 3)}，页面主值使用拟合表 S={fmt(calc.S, 3)}。
+                <p className="mt-3 rounded-2xl bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500 ring-1 ring-slate-100">
+                  CHSH 角度：a={fmt(theta1, 1)}°，a′={fmt(thetaAPrime, 1)}°，b={fmt(theta2, 1)}°，b′={fmt(thetaBPrime, 1)}°
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                  <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">E(a,b) = {fmt(prediction.chsh.Eab, 3)}</div>
+                  <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">E(a,b′) = {fmt(prediction.chsh.EabPrime, 3)}</div>
+                  <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">E(a′,b) = {fmt(prediction.chsh.EaPrimeb, 3)}</div>
+                  <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">E(a′,b′) = {fmt(prediction.chsh.EaPrimebPrime, 3)}</div>
                 </div>
-                <p className="mt-2 text-xs leading-5 text-slate-500">{calc.scenario.note}</p>
-                <p className="mt-1 break-words text-xs leading-5 text-slate-400">来源：{calc.scenario.source}</p>
-                {scenarioId === "literature_high_visibility" && (
-                  <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 ring-1 ring-amber-100">
-                    该场景仅作教学对比，不作为本实验实测默认数据。
-                  </p>
-                )}
+                <p className="mt-3 text-xs leading-5 text-slate-500">{prediction.note}</p>
               </div>
-              <MiniChart theta1={theta1} theta2={theta2} visibility={calc.visibility} />
+              <MiniChart theta1={theta1} theta2={theta2} visibility={prediction.visibility} />
             </aside>
           </div>
         </section>
@@ -628,8 +528,10 @@ export default function OriginalPhotonDemo() {
               <Slider label="光路对准程度" min={20} max={100} value={alignment} onChange={setAlignment} suffix="%" />
               <Slider label="滤光片带宽" min={1} max={12} value={filterBw} onChange={setFilterBw} suffix=" nm" />
               <Slider label="符合时间窗口 τ" min={0.5} max={20} step={0.5} value={windowNs} onChange={setWindowNs} suffix=" ns" />
-              <Slider label="偏振片 P₁ 角度 θ₁" min={0} max={180} step={0.5} value={theta1} onChange={updateTheta1} suffix="°" />
-              <Slider label="偏振片 P₂ 角度 θ₂" min={0} max={180} step={0.5} value={theta2} onChange={updateTheta2} suffix="°" />
+              <Slider label="偏振片 P₁ 角度 θ₁" min={0} max={180} step={0.5} value={theta1} onChange={setTheta1} suffix="°" />
+              <Slider label="偏振片 P₂ 角度 θ₂" min={0} max={180} step={0.5} value={theta2} onChange={setTheta2} suffix="°" />
+              <Slider label="补偿强度" min={0} max={100} value={compensationStrength} onChange={setCompensationStrength} suffix="%" />
+              <Slider label="背景噪声" min={0} max={40} value={noiseLevel} onChange={setNoiseLevel} suffix="%" />
             </div>
             <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <span>
@@ -637,6 +539,13 @@ export default function OriginalPhotonDemo() {
                 <span className="text-sm text-slate-500">关闭后，两路光子携带可区分路径信息，可见度明显下降。</span>
               </span>
               <input type="checkbox" checked={compensated} onChange={(e) => setCompensated(e.target.checked)} className="h-6 w-6 accent-slate-900" />
+            </label>
+            <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <span>
+                <span className="block text-sm font-semibold text-slate-800">显示统计涨落</span>
+                <span className="text-sm text-slate-500">开启后，APD 与符合计数会围绕拟合模型均值轻微跳动，S 值保持平滑估计。</span>
+              </span>
+              <input type="checkbox" checked={showFluctuation} onChange={(e) => setShowFluctuation(e.target.checked)} className="h-6 w-6 accent-slate-900" />
             </label>
           </div>
         </section>

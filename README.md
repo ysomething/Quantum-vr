@@ -35,11 +35,18 @@ src/demo-original
 
 迁移方式：
 
-- `OriginalPhotonDemo`：保留原版双光子纠缠 2D 光路、参数控制、符合计数、S 值估计和讲解脚本区域。
+- `OriginalPhotonDemo`：保留原版双光子纠缠 2D 光路、参数控制、符合计数、S 值估计和实验说明区域。
 - `Original3DDemo`：保留原版 Three.js 3D 实验台、OrbitControls、参数面板、实时计数和光子动画。
 - `originalDemoPage`：在主项目 demo 路由里创建 Shadow DOM，把原版 Tailwind 编译 CSS 注入 shadow root，避免污染 `#/3d`、`#/vr`、`#/ar` 的按钮、面板、canvas 和全局样式。
 
 此前 iframe 在部分手机浏览器或微信内嵌环境下可能白屏，因此现在默认不再依赖 iframe，而是直接渲染原版 demo 组件。`public/embedded-demo` 只作为历史静态构建保留，不再作为默认入口。
+
+2D Demo 的 CHSH 计数逻辑由 Excel 实验数据离线拟合生成，而不是固定预设结果卡片：
+- 原始数据包保存在 `data/量子纠缠网页计数_CHSH拟合数据包.xlsx`。
+- 拟合脚本为 `scripts/fit-chsh-model.py`，读取原始计数、CHSH 计算、拟合参数、网页推荐数据和角度曲线等 sheet，拟合可解释的偏振相关、符合计数、探测器增益和单路计数参数。
+- 脚本输出 `public/data/chsh_fit_model.json` 与 `public/data/chsh_fit_report.json`。页面优先加载 JSON，失败时使用 `src/demo-original/model/chshPredictor.js` 内置的同结构回退模型。
+- `predictCounts()` 每次根据滑块输入实时计算 APD1/APD2、当前符合计数、E(θ₁,θ₂)、CHSH 四项 E、S、S 不确定度、可见度、偶然符合和四类符合计数。预设按钮只负责快速设置滑块参数，不直接写死 S 或计数输出。
+- “高可见度教学态”等按钮是教学比较用的参数组，不代表页面默认实测结果。
 
 新增主项目路由：
 
@@ -66,8 +73,8 @@ git pull --ff-only
 手机端适配说明：
 
 - `#/demo/photon` 和 `#/demo/three` 在手机端仍然直接渲染原版组件，不使用 iframe。
-- 原版样式、颜色、布局和控件尽量保留，只补充 `max-width: 768px` 下的宽度、滚动、按钮尺寸、安全区和 3D 视野适配。
-- 2D Demo 的大光路图在小屏中允许图区域局部横向滚动，整体页面不横向溢出。
+- 原版样式、颜色、布局和控件尽量保留，只补充 `max-width: 768px` 下的宽度、按钮尺寸、安全区和 3D 视野适配。
+- 2D Demo 的大光路图在小屏中按容器宽度整体缩放并居中显示，尽量让主光路结构在竖屏中完整可见，整体页面不横向溢出。
 - 3D Demo 竖屏可操作，并提示“建议横屏体验 3D Demo，可获得更大视野。”
 
 复制或调整原版 demo 后，重新构建和部署主项目：

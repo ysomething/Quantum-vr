@@ -1,0 +1,190 @@
+{
+  "model_version": "chsh_fit_v1",
+  "generated_at": "2026-07-04T11:00:14.995023+00:00",
+  "source": "student_experiment_excel_plus_reference",
+  "source_workbook": "data\\量子纠缠网页计数_CHSH拟合数据包.xlsx",
+  "sheets_used": {
+    "raw_counts": "02原始长表",
+    "chsh_calculation": "03CHSH计算",
+    "fit_parameters": "04拟合参数",
+    "web_recommended_data": "05网页数据",
+    "angle_curve": "06角度曲线"
+  },
+  "angles": {
+    "a": 0,
+    "aPrime": 45,
+    "b": 22.5,
+    "bPrime": 67.5
+  },
+  "fit": {
+    "angleMode": "sum",
+    "visibility": 0.8585001969954783,
+    "phaseDeg": 180.0,
+    "offset": 4.399518955456224e-17,
+    "betaCosUnit": -1.0,
+    "betaSinUnit": -6.706247362012938e-19,
+    "C0": 652.1,
+    "accidental": 7.9,
+    "detectorGains": {
+      "pp": 1.00569338283468,
+      "pm": 0.9943066171653199,
+      "mp": 0.9943066171653199,
+      "mm": 1.00569338283468
+    },
+    "singles": {
+      "darkA": 0.594988140188941,
+      "darkB": 0.0,
+      "etaA": 8.093075459454642,
+      "etaB": 8.705131972506853
+    },
+    "baselineInputs": {
+      "pumpPower": 72,
+      "alignment": 92,
+      "filterBandwidth": 3,
+      "coincidenceWindow": 5,
+      "compensationStrength": 100,
+      "noiseLevel": 2
+    },
+    "response": {
+      "pumpExponent": 1.05,
+      "alignmentExponent": 1.8,
+      "filterTransmissionSlope": 0.065,
+      "filterPuritySlope": 0.026,
+      "windowTauNs": 2.2,
+      "windowAccidentalSlope": 0.085,
+      "compensationOffVisibility": 0.52,
+      "compensationMinTransmission": 0.58,
+      "noiseVisibilityLoss": 0.0046,
+      "noiseAccidentalScale": 0.035,
+      "noiseSinglesScale": 9.0
+    }
+  },
+  "uncertainty": {
+    "visibilityStd": 0.1026687012878801,
+    "SStd": 0.013518631351179849,
+    "rmseE": 0.000990704884883592,
+    "rmseCounts": 1.4871137219235344
+  },
+  "preset_inputs": {
+    "measured_default": {
+      "label": "实验实测初始态",
+      "pumpPower": 72,
+      "alignment": 92,
+      "compensationEnabled": true,
+      "compensationStrength": 100,
+      "filterBandwidth": 3,
+      "coincidenceWindow": 5,
+      "noiseLevel": 2,
+      "thetaA": 0,
+      "thetaB": 22.5
+    },
+    "compensation_off": {
+      "label": "关闭补偿",
+      "pumpPower": 72,
+      "alignment": 88,
+      "compensationEnabled": false,
+      "compensationStrength": 30,
+      "filterBandwidth": 3,
+      "coincidenceWindow": 5,
+      "noiseLevel": 8,
+      "thetaA": 0,
+      "thetaB": 22.5
+    },
+    "more_background": {
+      "label": "增大噪声",
+      "pumpPower": 92,
+      "alignment": 84,
+      "compensationEnabled": true,
+      "compensationStrength": 86,
+      "filterBandwidth": 7,
+      "coincidenceWindow": 10,
+      "noiseLevel": 24,
+      "thetaA": 0,
+      "thetaB": 22.5
+    },
+    "chsh_angles": {
+      "label": "CHSH 角度",
+      "pumpPower": 75,
+      "alignment": 94,
+      "compensationEnabled": true,
+      "compensationStrength": 100,
+      "filterBandwidth": 3,
+      "coincidenceWindow": 5,
+      "noiseLevel": 2,
+      "thetaA": 0,
+      "thetaB": 22.5
+    },
+    "high_visibility_teaching": {
+      "label": "高可见度教学态",
+      "pumpPower": 82,
+      "alignment": 97,
+      "compensationEnabled": true,
+      "compensationStrength": 100,
+      "filterBandwidth": 2,
+      "coincidenceWindow": 4,
+      "noiseLevel": 0,
+      "thetaA": 0,
+      "thetaB": 22.5
+    }
+  },
+  "training_summary": {
+    "S_from_excel": 2.428205243781959,
+    "S_from_default_counts": 2.4242424242424243,
+    "S_from_fitted_model_default": 2.4282052437819583,
+    "rmse_E": 0.000990704884883592,
+    "rmse_counts": 1.4871137219235344,
+    "scenario_summary": {
+      "web_default": {
+        "S_from_counts": 2.4242424242424243,
+        "S_from_fit_sheet": 2.428205243781959,
+        "visibility": 0.8585001969954783,
+        "totalPerSetting": 660.0,
+        "meanSinglesA": 5280.25,
+        "meanSinglesB": 5666.75
+      },
+      "low_count_alignment": {
+        "S_from_counts": 2.0952380952380953,
+        "S_from_fit_sheet": 2.101580470577885,
+        "visibility": 0.7430209009774189,
+        "totalPerSetting": 210.0,
+        "meanSinglesA": 1678.75,
+        "meanSinglesB": 1804.5
+      },
+      "high_rate_background": {
+        "S_from_counts": 2.2508474576271187,
+        "S_from_fit_sheet": 2.2549364236688874,
+        "visibility": 0.7972404181604059,
+        "totalPerSetting": 1180.0,
+        "meanSinglesA": 9434.5,
+        "meanSinglesB": 10146.25
+      },
+      "literature_undergrad": {
+        "S_from_counts": 2.304,
+        "S_from_fit_sheet": 2.307,
+        "visibility": 0.8156476720986825,
+        "totalPerSetting": 1000.0,
+        "meanSinglesA": 8009.75,
+        "meanSinglesB": 8612.0
+      },
+      "literature_high_visibility": {
+        "S_from_counts": 2.656,
+        "S_from_fit_sheet": 2.653,
+        "visibility": 0.9379771452439553,
+        "totalPerSetting": 1000.0,
+        "meanSinglesA": 8000.0,
+        "meanSinglesB": 8596.5
+      },
+      "classical_control": {
+        "S_from_counts": 1.793939393939394,
+        "S_from_fit_sheet": 1.8,
+        "visibility": 0.6363961030678927,
+        "totalPerSetting": 660.0,
+        "meanSinglesA": 5280.5,
+        "meanSinglesB": 5669.0
+      }
+    },
+    "raw_rows": 48,
+    "chsh_rows": 12,
+    "angle_curve_rows": 111
+  }
+}
