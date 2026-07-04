@@ -39,7 +39,7 @@ src/demo-original
 - `Original3DDemo`：保留原版 Three.js 3D 实验台、OrbitControls、参数面板、实时计数和光子动画。
 - `originalDemoPage`：在主项目 demo 路由里创建 Shadow DOM，把原版 Tailwind 编译 CSS 注入 shadow root，避免污染 `#/3d`、`#/vr`、`#/ar` 的按钮、面板、canvas 和全局样式。
 
-此前 iframe 在部分手机浏览器或微信内嵌环境下可能白屏，因此现在默认不再依赖 iframe，而是直接渲染原版 demo 组件。`public/embedded-demo` 只作为历史静态构建保留，不再作为默认入口。
+此前 iframe 在部分手机浏览器或微信内嵌环境下可能白屏，因此现在默认不再依赖 iframe，而是直接渲染原版 demo 组件。`public/embedded-demo` 只保留兼容跳转页，旧静态构建不再发布，避免线上出现未接入统一模型的历史 Demo。
 
 2D Demo 的 CHSH 计数逻辑由 Excel 实验数据离线拟合生成，而不是固定预设结果卡片：
 - 原始数据包保存在 `data/量子纠缠网页计数_CHSH拟合数据包.xlsx`。
@@ -85,6 +85,14 @@ npm run deploy
 ```
 
 命名注意：第二个 demo 是 3D Demo，不是三光子页面。所有用户可见文案中都不要出现“三光子”，统一写作“3D Demo”。
+
+## 数据模型统一说明
+
+- 原始实验数据保留在 `data/量子纠缠网页计数_CHSH拟合数据包.xlsx`。
+- 拟合脚本输出 `public/data/chsh_fit_model.json` 与 `public/data/chsh_fit_report.json`，页面运行时优先通过 `import.meta.env.BASE_URL` 加载 JSON，加载失败时使用同结构内置回退模型。
+- 统一预测模块为 `src/demo-original/model/chshPredictor.js`，对外提供 `loadFitModel()`、`predictCounts()`、`predictCHSH()`、`calculateE()` 与 `calculateS()`。
+- `#/demo/photon` 和 `#/demo/three` 共用这套 CHSH 拟合预测模型。APD1/APD2、符合计数、偶然符合、E、CHSH S、S 不确定度和可见度均随滑块输入实时计算，预设按钮只设置输入参数，不直接写死输出结果。
+- 该模型用于教学演示，说明网页中的计数与 S 值来自实验数据拟合链路，而不是无来源的固定展示数值。
 
 ## 评委手机扫码体验说明
 

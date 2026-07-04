@@ -1,32 +1,64 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { DEFAULT_CHSH_FIT_MODEL, loadFitModel, predictCounts } from "./model/chshPredictor.js";
 
 const EXPERIMENT_DEFAULTS = {
   emissionRate: 4.2,
   pumpPower: 72,
   polarizerA: 0,
-  polarizerB: 45,
-  visibility: 0.86,
+  polarizerB: 22.5,
+  alignment: 92,
+  compensationEnabled: true,
+  compensationStrength: 100,
+  filterBandwidth: 3,
   coincidenceWindow: 5,
+  noiseLevel: 2,
 };
 
 const toRad = (value) => (value * Math.PI) / 180;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-function coincidenceProbability(angleA, angleB, visibility) {
-  return clamp(0.5 * (1 + visibility * Math.cos(2 * toRad(angleA - angleB))), 0.04, 0.96);
+function toPredictionParams(settings, elapsed = 0) {
+  const thetaA = Number(settings.polarizerA ?? EXPERIMENT_DEFAULTS.polarizerA);
+  const thetaB = Number(settings.polarizerB ?? EXPERIMENT_DEFAULTS.polarizerB);
+  return {
+    pumpPower: settings.pumpPower,
+    thetaA,
+    thetaB,
+    thetaAForS: thetaA,
+    thetaAPrime: (thetaA + 45) % 180,
+    thetaBForS: thetaB,
+    thetaBPrime: (thetaB + 45) % 180,
+    alignment: settings.alignment,
+    compensationEnabled: settings.compensationEnabled,
+    compensationStrength: settings.compensationStrength,
+    filterBandwidth: settings.filterBandwidth,
+    coincidenceWindow: settings.coincidenceWindow,
+    noiseLevel: settings.noiseLevel,
+    fluctuationEnabled: elapsed > 0,
+    fluctuationSeed: Math.floor(elapsed * 5),
+  };
 }
 
-function estimateCounts(settings, elapsed = 0) {
-  const probability = coincidenceProbability(settings.polarizerA, settings.polarizerB, settings.visibility);
-  const pumpFactor = settings.pumpPower / 100;
-  const windowFactor = clamp(0.72 + settings.coincidenceWindow / 18, 0.72, 1.52);
-  const detectorA = Math.round(6200 * pumpFactor * settings.emissionRate + 240 * Math.sin(elapsed * 1.7));
-  const detectorB = Math.round(6000 * pumpFactor * settings.emissionRate + 220 * Math.cos(elapsed * 1.4));
-  const coincidence = Math.round(detectorA * 0.18 * probability * settings.visibility * windowFactor);
+function probabilityFromCorrelation(eValue) {
+  return clamp((1 + eValue) / 2, 0.04, 0.96);
+}
 
-  return { detectorA, detectorB, coincidence, probability };
+function estimateCounts(settings, model = DEFAULT_CHSH_FIT_MODEL, elapsed = 0) {
+  const prediction = predictCounts(toPredictionParams(settings, elapsed), model);
+  return {
+    detectorA: prediction.singlesA,
+    detectorB: prediction.singlesB,
+    coincidence: prediction.coincidenceCurrent,
+    probability: probabilityFromCorrelation(prediction.ECurrent),
+    visibility: prediction.visibility,
+    ECurrent: prediction.ECurrent,
+    S: prediction.chsh.S,
+    SStd: prediction.chsh.SStd,
+    violated: prediction.chsh.violated,
+    accidental: prediction.accidental,
+  };
 }
 
 function makeTube(curve, radius, color, opacity) {
@@ -216,8 +248,11 @@ function disposeObject(object) {
 export default function Original3DDemo({ onBackToPhoton }) {
   const mountRef = useRef(null);
   const paramsRef = useRef(EXPERIMENT_DEFAULTS);
+  const fitModelRef = useRef(DEFAULT_CHSH_FIT_MODEL);
   const [params, setParams] = useState(EXPERIMENT_DEFAULTS);
-  const [stats, setStats] = useState(() => estimateCounts(EXPERIMENT_DEFAULTS));
+  const [fitModel, setFitModel] = useState(DEFAULT_CHSH_FIT_MODEL);
+  const [modelStatus, setModelStatus] = useState("使用内置拟合模型");
+  const [stats, setStats] = useState(() => estimateCounts(EXPERIMENT_DEFAULTS, DEFAULT_CHSH_FIT_MODEL));
 
   const angleGap = useMemo(
     () => Math.abs((((params.polarizerA - params.polarizerB + 90) % 180) + 180) % 180 - 90),
@@ -226,7 +261,25 @@ export default function Original3DDemo({ onBackToPhoton }) {
 
   useEffect(() => {
     paramsRef.current = params;
+    setStats(estimateCounts(params, fitModelRef.current));
   }, [params]);
+
+  useEffect(() => {
+    fitModelRef.current = fitModel;
+    setStats(estimateCounts(paramsRef.current, fitModel));
+  }, [fitModel]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadFitModel().then(({ model, fromNetwork }) => {
+      if (cancelled) return;
+      setFitModel(model);
+      setModelStatus(fromNetwork ? "已加载 Excel 拟合模型" : "使用内置拟合模型");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -457,7 +510,8 @@ export default function Original3DDemo({ onBackToPhoton }) {
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
       const live = paramsRef.current;
-      const probability = coincidenceProbability(live.polarizerA, live.polarizerB, live.visibility);
+      const liveStats = estimateCounts(live, fitModelRef.current, elapsed);
+      const probability = liveStats.probability;
       const duration = THREE.MathUtils.lerp(3.0, 1.18, (live.emissionRate - 1) / 7);
       const pumpPulse = 0.55 + 0.45 * Math.sin(elapsed * 3.2);
 
@@ -525,7 +579,7 @@ export default function Original3DDemo({ onBackToPhoton }) {
 
       if (elapsed - lastStatsAt > 0.18) {
         lastStatsAt = elapsed;
-        setStats(estimateCounts(live, elapsed));
+        setStats(liveStats);
       }
 
       controls.update();
@@ -579,7 +633,7 @@ export default function Original3DDemo({ onBackToPhoton }) {
             <h2 className="text-base font-semibold text-white">实验参数</h2>
             <div className="mt-4 space-y-4">
               <ControlSlider
-                label="光子发射频率"
+                label="光子动画频率"
                 value={params.emissionRate}
                 min={1}
                 max={8}
@@ -615,13 +669,13 @@ export default function Original3DDemo({ onBackToPhoton }) {
                 onChange={(value) => setParam("polarizerB", value)}
               />
               <ControlSlider
-                label="干涉可见度"
-                value={params.visibility}
-                min={0.35}
-                max={0.98}
-                step={0.01}
-                unit=""
-                onChange={(value) => setParam("visibility", value)}
+                label="光路对准程度"
+                value={params.alignment}
+                min={20}
+                max={100}
+                step={1}
+                unit="%"
+                onChange={(value) => setParam("alignment", value)}
               />
               <ControlSlider
                 label="符合时间窗口"
@@ -641,27 +695,34 @@ export default function Original3DDemo({ onBackToPhoton }) {
               <Metric label="D1" value={stats.detectorA} unit="counts/s" tone="cyan" />
               <Metric label="D2" value={stats.detectorB} unit="counts/s" tone="green" />
               <Metric label="符合" value={stats.coincidence} unit="pairs/s" tone="amber" />
-              <Metric label="P(A,B)" value={stats.probability.toFixed(2)} unit="" tone="violet" />
+              <Metric label="CHSH S" value={stats.S.toFixed(2)} unit={stats.violated ? "S > 2" : "S ≤ 2"} tone="violet" />
             </div>
             <div className="mt-4 rounded-md border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
               <div className="flex items-center justify-between">
-                <span>角度差</span>
-                <span className="font-mono text-cyan-100">{angleGap.toFixed(1)}°</span>
+                <span>E(θA,θB)</span>
+                <span className="font-mono text-cyan-100">{stats.ECurrent.toFixed(3)}</span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
                 <div
                   className="h-full rounded-full bg-cyan-300 transition-all"
-                  style={{ width: `${Math.round(stats.probability * 100)}%` }}
+                  style={{ width: `${Math.round(stats.visibility * 100)}%` }}
                 />
               </div>
+              <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-400">
+                <span>V={stats.visibility.toFixed(3)} · acc≈{stats.accidental.toFixed(1)}</span>
+                <span>σS={stats.SStd.toFixed(3)} · Δθ={angleGap.toFixed(1)}°</span>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-400">
+                计数与 S 值由实验数据拟合模型实时生成。{modelStatus}
+              </p>
             </div>
           </section>
 
           <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 text-sm leading-6 text-slate-300">
             <h2 className="text-base font-semibold text-white">模型说明</h2>
             <p className="mt-3">
-              场景用 BBO 晶体处的成对发射表示 SPDC 过程，符合概率采用简化的
-              <span className="font-mono text-cyan-100"> cos(2Δθ)</span> 相关项，适合教学展示和页面演示。
+              场景用 BBO 晶体处的成对发射表示 SPDC 过程。D1/D2、符合计数、E、V 与 CHSH S
+              均调用和双光子纠缠 Demo 相同的 Excel 拟合预测模型，滑块只改变模型输入参数。
             </p>
           </section>
         </aside>

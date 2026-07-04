@@ -1,5 +1,8 @@
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const deg = (value) => (value * Math.PI) / 180;
+const safeBaseUrl = () => import.meta.env?.BASE_URL ?? "/";
+
+export const FIT_MODEL_PATH = "data/chsh_fit_model.json";
 
 export const DEFAULT_CHSH_FIT_MODEL = {
   model_version: "chsh_fit_v1",
@@ -126,6 +129,28 @@ export const PRESET_ORDER = [
   "high_visibility_teaching",
 ];
 
+export function fitModelUrl(baseUrl = safeBaseUrl()) {
+  return `${baseUrl}${FIT_MODEL_PATH}`;
+}
+
+export async function loadFitModel({ baseUrl = safeBaseUrl(), signal } = {}) {
+  try {
+    const response = await fetch(fitModelUrl(baseUrl), { cache: "no-cache", signal });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const model = await response.json();
+    return { model, fromNetwork: true, source: fitModelUrl(baseUrl), error: null };
+  } catch (error) {
+    return {
+      model: DEFAULT_CHSH_FIT_MODEL,
+      fromNetwork: false,
+      source: "embedded-default",
+      error,
+    };
+  }
+}
+
 function hashNumber(value) {
   const text = String(value);
   let hash = 2166136261;
@@ -220,6 +245,22 @@ function meanCounts(total, eValue, accidental, gains) {
   };
 }
 
+export function calculateE(counts) {
+  const pp = Number(counts.pp ?? counts.Npp ?? 0);
+  const pm = Number(counts.pm ?? counts.Npm ?? 0);
+  const mp = Number(counts.mp ?? counts.Nmp ?? 0);
+  const mm = Number(counts.mm ?? counts.Nmm ?? 0);
+  const total = pp + pm + mp + mm;
+  if (!Number.isFinite(total) || total <= 0) return 0;
+  return clamp((pp + mm - pm - mp) / total, -0.98, 0.98);
+}
+
+export function calculateS(Eab, EabPrime, EaPrimeb, EaPrimebPrime) {
+  const values = [Eab, EabPrime, EaPrimeb, EaPrimebPrime].map(Number);
+  if (values.some((value) => !Number.isFinite(value))) return 0;
+  return Math.abs(values[0] - values[1] - values[2] - values[3]);
+}
+
 export function predictCounts(params, model = DEFAULT_CHSH_FIT_MODEL) {
   const fit = model.fit ?? DEFAULT_CHSH_FIT_MODEL.fit;
   const base = fit.baselineInputs;
@@ -242,7 +283,7 @@ export function predictCounts(params, model = DEFAULT_CHSH_FIT_MODEL) {
   const EabPrime = fitCorrelation(angles.a, angles.bPrime, visibility, fit);
   const EaPrimeb = fitCorrelation(angles.aPrime, angles.b, visibility, fit);
   const EaPrimebPrime = fitCorrelation(angles.aPrime, angles.bPrime, visibility, fit);
-  const S = Math.abs(Eab - EabPrime - EaPrimeb - EaPrimebPrime);
+  const S = calculateS(Eab, EabPrime, EaPrimeb, EaPrimebPrime);
   const sStd = (model.uncertainty?.SStd ?? 0.04) * (1 + noiseExcess / 80 + Math.max(0, 70 - (params.alignment ?? base.alignment)) / 180);
   const mean = meanCounts(coincidenceMean, eCurrent, accidental, fit.detectorGains ?? {});
   const fluctuationSeed = params.fluctuationSeed ?? 0;
@@ -280,4 +321,8 @@ export function predictCounts(params, model = DEFAULT_CHSH_FIT_MODEL) {
     accidental,
     note: "本页计数由实验数据拟合模型生成，滑块改变的是模型输入参数，因此 S 和符合计数会连续变化。",
   };
+}
+
+export function predictCHSH(params, model = DEFAULT_CHSH_FIT_MODEL) {
+  return predictCounts(params, model).chsh;
 }

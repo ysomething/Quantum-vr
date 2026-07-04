@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { DEFAULT_CHSH_FIT_MODEL, PRESET_ORDER, predictCounts } from "./model/chshPredictor.js";
+import { DEFAULT_CHSH_FIT_MODEL, PRESET_ORDER, loadFitModel, predictCounts } from "./model/chshPredictor.js";
 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const deg = (x) => (x * Math.PI) / 180;
@@ -307,18 +307,11 @@ export default function OriginalPhotonDemo() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${import.meta.env.BASE_URL}data/chsh_fit_model.json`, { cache: "no-cache" })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((model) => {
+    loadFitModel()
+      .then(({ model, fromNetwork }) => {
         if (cancelled) return;
         setFitModel(model);
-        setModelStatus("已加载 Excel 拟合模型");
-      })
-      .catch(() => {
-        if (!cancelled) setModelStatus("使用内置拟合模型");
+        setModelStatus(fromNetwork ? "已加载 Excel 拟合模型" : "使用内置拟合模型");
       });
     return () => {
       cancelled = true;
