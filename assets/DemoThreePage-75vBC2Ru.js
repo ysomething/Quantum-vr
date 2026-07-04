@@ -1,1 +1,0 @@
-import{m as o}from"./originalDemoPage-C7ZpY4e8.js";import"./index-Bt22rtIg.js";async function n(e,t){return o(e,t,{kind:"three",title:"3D Demo",description:"本页面以 Three.js 三维交互方式展示实验光路结构和关键器件位置，辅助理解双光子纠缠实验的空间布局。"})}export{n as mount};
