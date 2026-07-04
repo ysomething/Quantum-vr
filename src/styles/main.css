@@ -3823,3 +3823,21 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
     max-height: 24vh !important;
   }
 }
+
+@media (max-width: 768px) {
+  .lab-mode-page .hotspot-card.is-open {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
+    width: min(88vw, 420px) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: 26vh !important;
+    overflow-y: auto !important;
+    z-index: 90 !important;
+  }
+
+  .lab-mode-page .hotspot-card.is-open ~ .spatial-panel,
+  .lab-mode-page .hotspot-card.is-open ~ .mobile-scene-chrome .mobile-bottom-hint {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
