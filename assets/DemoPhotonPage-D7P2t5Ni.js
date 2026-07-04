@@ -1,1 +1,0 @@
-import{m as n}from"./originalDemoPage-8lJl4kql.js";import"./index-BCAZf8PA.js";async function r(o,t){return n(o,t,{kind:"photon",title:"双光子纠缠 Demo",description:"本页面通过实验数据驱动的 CHSH 近似模型，展示实验参数对单路计数、符合计数、关联函数和 S 值的影响。"})}export{r as mount};

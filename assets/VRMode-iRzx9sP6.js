@@ -1,4 +1,4 @@
-import{C as H,M as N}from"./three.module-CbQKnzqj.js";import{c as q,V as P,a as z,b as Q,d as K,e as W,f as X,g as j,h as J,i as Y}from"./labUi-CkVMDaux.js";import{l as Z,c as tt}from"./hotspots-B40VPf0H.js";import{g as at}from"./runtimeConfig-De3KaEZK.js";import{d as et,c as ot}from"./index-BCAZf8PA.js";import"./OrbitControls-CMV-iHXY.js";function nt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page vr-mode-page",o.innerHTML=`
+import{C as H,M as N}from"./three.module-CbQKnzqj.js";import{c as q,V as P,a as z,b as Q,d as K,e as W,f as X,g as j,h as J,i as Y}from"./labUi-CkVMDaux.js";import{l as Z,c as tt}from"./hotspots-B40VPf0H.js";import{g as at}from"./runtimeConfig-De3KaEZK.js";import{d as et,c as ot}from"./index-ByQrS7p8.js";import"./OrbitControls-CMV-iHXY.js";function nt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page vr-mode-page",o.innerHTML=`
     <canvas class="scene-canvas lab-scene-canvas" aria-label="量子纠缠 VR 沉浸展示"></canvas>
     <div class="ambient-haze" aria-hidden="true"></div>
 
@@ -82,7 +82,7 @@ import{C as H,M as N}from"./three.module-CbQKnzqj.js";import{c as q,V as P,a as 
         <p class="mobile-bottom-hint">单指旋转 · 双指缩放 · 可开启体感</p>
       </div>
 
-      <section class="mobile-vr-start-panel" data-mobile-vr-start>
+      <section class="mobile-vr-start-panel vr-inline-controls" data-mobile-vr-start>
         <p>VR 沉浸模式</p>
         <h2>选择观看方式</h2>
         <div class="mobile-vr-start-panel__grid">
@@ -102,15 +102,15 @@ import{C as H,M as N}from"./three.module-CbQKnzqj.js";import{c as q,V as P,a as 
         </div>
         <div class="mobile-drawer__grid">
           <button type="button" data-mobile-tour-restart>自动导览</button>
-          <button type="button" data-mobile-phone>普通沉浸</button>
-          <button type="button" data-mobile-motion-toggle>手机体感</button>
+          <button type="button" data-mobile-phone>普通沉浸模式</button>
+          <button type="button" data-mobile-motion-toggle>手机体感模式</button>
           <button type="button" data-mobile-free>自由查看</button>
           <button type="button" data-mobile-ar>AR 扫描</button>
           <button type="button" data-mobile-home>返回首页</button>
         </div>
       </nav>
 
-      <nav class="controls-panel vr-controls-panel" aria-label="VR 沉浸控制">
+      <nav class="controls-panel vr-controls-panel vr-inline-controls" aria-label="VR 沉浸控制">
         <button class="primary-control" type="button" data-tour-restart>自动导览</button>
         <button type="button" data-phone>普通沉浸模式</button>
         <button type="button" data-motion-toggle>手机体感模式</button>
