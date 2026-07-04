@@ -3590,6 +3590,32 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
   }
 }
 
+@media (max-width: 768px) {
+  .vr-mode-page .vr-inline-controls,
+  .vr-mode-page .mobile-bottom-hint {
+    display: none !important;
+  }
+
+  .vr-mode-page .spatial-panel,
+  body[data-view-mode="scan"] .vr-mode-page .spatial-panel,
+  body[data-view-mode="motion"] .vr-mode-page .spatial-panel {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
+    width: min(88vw, 420px) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: 24vh !important;
+    overflow-y: auto !important;
+    transform: translateX(-50%) translateY(8px) !important;
+    z-index: 80 !important;
+  }
+
+  .vr-mode-page .spatial-panel.is-visible {
+    transform: translateX(-50%) translateY(0) !important;
+  }
+}
+
 .calibration-panel--realtime {
   border: 1px solid rgba(111, 236, 255, 0.22);
   background: rgba(4, 12, 28, 0.86);
@@ -3787,5 +3813,13 @@ body[data-view-mode="motion"] .lab-mode-page .spatial-panel {
   .lab-mode-page .spatial-panel.is-visible,
   .lab-mode-page .toast.is-visible {
     transform: translateX(-50%) translateY(0) !important;
+  }
+
+  .vr-mode-page .spatial-panel,
+  body[data-view-mode="scan"] .vr-mode-page .spatial-panel,
+  body[data-view-mode="motion"] .vr-mode-page .spatial-panel {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
+    width: min(88vw, 420px) !important;
+    max-height: 24vh !important;
   }
 }
