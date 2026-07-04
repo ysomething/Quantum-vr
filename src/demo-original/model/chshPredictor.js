@@ -319,7 +319,7 @@ export function predictCounts(params, model = DEFAULT_CHSH_FIT_MODEL) {
     meanCounts: mean,
     visibility,
     accidental,
-    note: "本页计数由实验数据拟合模型生成，滑块改变的是模型输入参数，因此 S 和符合计数会连续变化。",
+    note: "本页面中的计数与 S 值由实测数据校准的 CHSH 近似模型实时生成，用于辅助理解实验参数变化对贝尔不等式检验结果的影响。",
   };
 }
 

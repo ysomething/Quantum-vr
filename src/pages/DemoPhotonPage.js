@@ -4,6 +4,6 @@ export async function mount(app, context) {
   return mountOriginalDemoPage(app, context, {
     kind: 'photon',
     title: '双光子纠缠 Demo',
-    description: '源码级集成原版 2D Demo，保留原版光路动画、参数控制、符合计数和 S 值交互。',
+    description: '本页面通过实验数据驱动的 CHSH 近似模型，展示实验参数对单路计数、符合计数、关联函数和 S 值的影响。',
   });
 }

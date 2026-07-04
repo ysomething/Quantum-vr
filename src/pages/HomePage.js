@@ -6,8 +6,8 @@ const modeCards = [
     eyebrow: 'Mode 01',
     title: '3D 展示模式',
     mobileTitle: '3D 展示模式',
-    description: '打开视觉母版级 Three.js 量子纠缠实验室，自由旋转、缩放，并跟随自动导览观察光路。',
-    mobileDescription: '无需摄像头，手机端同样保留 Bloom、粒子、网格与清晰光路。',
+    description: '自由观察量子纠缠实验装置，理解泵浦光、BBO 晶体、偏振分析与符合计数的空间结构。',
+    mobileDescription: '自由观察量子纠缠实验装置，理解泵浦光、BBO 晶体、偏振分析与符合计数的空间结构。',
     action: '进入 3D 展示',
     mobileAction: '进入 3D 展示',
   },
@@ -15,33 +15,33 @@ const modeCards = [
     route: '/vr',
     eyebrow: 'Mode 02',
     title: 'VR 沉浸模式',
-    description: '以第一人称进入实验室，可切换普通沉浸、手机体感、自动导览和自由查看。',
-    mobileDescription: '适合横屏或体感观看；若设备不支持体感，会自动回到手指拖动。',
+    description: '以沉浸式视角进入实验场景，观察纠缠光子路径与贝尔不等式检验过程。',
+    mobileDescription: '以沉浸式视角进入实验场景，观察纠缠光子路径与贝尔不等式检验过程。',
     action: '进入 VR 沉浸',
-    mobileAction: '进入 VR 模式',
+    mobileAction: '进入 VR 沉浸',
   },
   {
     route: '/ar',
     eyebrow: '推荐体验',
     title: 'AR 扫描模式',
-    description: '微信扫码打开后启动摄像头，对准识别图，让量子纠缠实验室贴合到现实画面上。',
-    mobileDescription: '对准识别图，让实验装置从纸面浮现，适合评委手机现场体验。',
+    description: '扫描识别图，在真实环境中叠加动态量子纠缠实验装置。',
+    mobileDescription: '扫描识别图，在真实环境中叠加动态量子纠缠实验装置。',
     action: '进入 AR 扫描',
-    mobileAction: '开始 AR 扫描',
+    mobileAction: '进入 AR 扫描',
     recommended: true,
   },
   {
     route: '/demo/photon',
     eyebrow: 'Demo 01',
     title: '双光子纠缠 Demo',
-    description: '调节泵浦光、补偿、偏振角与符合窗口，观察符合计数和 S 值变化。',
+    description: '调节实验参数，实时观察单路计数、符合计数、关联函数与 CHSH 的 S 值变化。',
     action: '进入双光子 Demo',
   },
   {
     route: '/demo/three',
     eyebrow: 'Demo 02',
     title: '3D Demo',
-    description: '打开 demo 的 3D 交互页面，补充展示实验路径与三维演示内容。',
+    description: '通过 Three.js 三维交互演示补充理解实验光路与器件结构。',
     action: '进入 3D Demo',
   },
 ];
@@ -79,8 +79,8 @@ export async function mount(app, { navigate }) {
       <div class="home-hero__copy">
         <p class="eyebrow">Quantum Interactive Showcase</p>
         <h1>量子纠缠交互实验室</h1>
-        <p class="home-subtitle">扫码进入三维、VR 与 AR 量子实验展示。</p>
-        <p class="home-description">3D 与 VR 模式以 scene12-13-vr-real-vr 为视觉母版；AR 模式使用 MindAR 图像识别实现微信扫码体验。手机端保留接近电脑端的高质量材质、Bloom、粒子、背景和光路，只把操作收纳到小菜单里。</p>
+        <p class="home-subtitle">融合三维建模、沉浸式展示、WebAR 图像识别与实验数据驱动模型的量子纠缠教学演示系统。</p>
+        <p class="home-description">系统围绕双光子纠缠实验、SPDC 过程、偏振分析、符合计数与 CHSH 不等式检验构建多模态交互展示，适合课堂讲解、现场演示和移动端扫码体验。</p>
         <div class="home-runtime-badges" aria-label="当前设备体验状态">
           <span>${runtime.isWeChat ? '微信扫码环境' : runtime.isMobile ? '手机浏览器' : '电脑端展示环境'}</span>
           <span>${describeRuntime(runtime)}</span>
@@ -95,7 +95,7 @@ export async function mount(app, { navigate }) {
     </section>
     <section class="mode-grid" aria-label="展示模式选择"></section>
     <footer class="home-footer">
-      <p>${runtime.isMobile ? '推荐先进入 AR 扫描模式；如果摄像头权限失败，请切换到 3D 展示模式观看。' : '电脑端可先体验 3D 展示；正式评审扫码建议使用 HTTPS 部署地址。'}</p>
+      <p>${runtime.isMobile ? '推荐先体验 AR 扫描模式；如果摄像头权限受限，可切换到 3D 展示模式观看。' : '电脑端可先体验 3D 展示；扫码展示时建议使用正式 HTTPS 地址。'}</p>
     </footer>
   `;
 

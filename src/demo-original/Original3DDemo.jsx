@@ -251,7 +251,7 @@ export default function Original3DDemo({ onBackToPhoton }) {
   const fitModelRef = useRef(DEFAULT_CHSH_FIT_MODEL);
   const [params, setParams] = useState(EXPERIMENT_DEFAULTS);
   const [fitModel, setFitModel] = useState(DEFAULT_CHSH_FIT_MODEL);
-  const [modelStatus, setModelStatus] = useState("使用内置拟合模型");
+  const [modelStatus, setModelStatus] = useState("使用内置校准模型");
   const [stats, setStats] = useState(() => estimateCounts(EXPERIMENT_DEFAULTS, DEFAULT_CHSH_FIT_MODEL));
 
   const angleGap = useMemo(
@@ -274,7 +274,7 @@ export default function Original3DDemo({ onBackToPhoton }) {
     loadFitModel().then(({ model, fromNetwork }) => {
       if (cancelled) return;
       setFitModel(model);
-      setModelStatus(fromNetwork ? "已加载 Excel 拟合模型" : "使用内置拟合模型");
+      setModelStatus(fromNetwork ? "已加载实测数据校准模型" : "使用内置校准模型");
     });
     return () => {
       cancelled = true;
@@ -713,7 +713,7 @@ export default function Original3DDemo({ onBackToPhoton }) {
                 <span>σS={stats.SStd.toFixed(3)} · Δθ={angleGap.toFixed(1)}°</span>
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-400">
-                计数与 S 值由实验数据拟合模型实时生成。{modelStatus}
+                计数与 S 值由实测数据校准的 CHSH 近似模型实时生成。{modelStatus}
               </p>
             </div>
           </section>
@@ -722,7 +722,7 @@ export default function Original3DDemo({ onBackToPhoton }) {
             <h2 className="text-base font-semibold text-white">模型说明</h2>
             <p className="mt-3">
               场景用 BBO 晶体处的成对发射表示 SPDC 过程。D1/D2、符合计数、E、V 与 CHSH S
-              均调用和双光子纠缠 Demo 相同的 Excel 拟合预测模型，滑块只改变模型输入参数。
+              均调用和双光子纠缠 Demo 相同的实测数据校准模型，滑块只改变泵浦强度、偏振角、对准程度和符合窗口等输入参数。
             </p>
           </section>
         </aside>

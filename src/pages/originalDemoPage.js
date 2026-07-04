@@ -162,16 +162,16 @@ export async function mountOriginalDemoPage(app, { navigate }, { title, descript
     <header class="original-demo-header">
       <button class="ghost-button" type="button" data-route-home>返回首页</button>
       <div class="original-demo-heading">
-        <p class="eyebrow">Original Demo</p>
+        <p class="eyebrow">Interactive Demo</p>
         <h1>${title}</h1>
         <p>${description}</p>
       </div>
     </header>
-    <section class="original-demo-host-shell" aria-label="${title} 原版演示">
+    <section class="original-demo-host-shell" aria-label="${title} 交互演示">
       <div class="original-demo-loading" data-original-demo-loading>
-        <p class="eyebrow">Demo Status</p>
-        <strong>正在加载原版 Demo...</strong>
-        <span>源码级集成的原版页面即将显示。</span>
+        <p class="eyebrow">Loading</p>
+        <strong>正在加载交互演示...</strong>
+        <span>实验光路与计数模型即将显示。</span>
       </div>
       <div class="original-demo-shadow-host" data-original-demo-host></div>
     </section>
@@ -203,7 +203,7 @@ export async function mountOriginalDemoPage(app, { navigate }, { title, descript
   } catch (error) {
     console.error("Original demo failed to load.", error);
     if (loading) {
-      loading.querySelector("strong").textContent = "原版 Demo 加载失败";
+      loading.querySelector("strong").textContent = "交互演示加载失败";
       loading.querySelector("span").textContent = "请刷新页面，或稍后重新进入该 Demo。";
       loading.classList.add("is-error");
     }

@@ -16,25 +16,25 @@ const TAB_LABELS = [
 
 const RANGE_CONTROLS = {
   transform: [
-    { path: 'scale', label: 'scale 缩放', min: 0.05, max: 2, step: 0.01, digits: 3 },
-    { path: 'position.x', label: 'position.x 左右', min: -2, max: 2, step: 0.01 },
-    { path: 'position.y', label: 'position.y 上下', min: -2, max: 2, step: 0.01 },
-    { path: 'position.z', label: 'position.z 远近/高度', min: -2, max: 2, step: 0.01 },
-    { path: 'rotation.x', label: 'rotation.x 角度', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
-    { path: 'rotation.y', label: 'rotation.y 角度', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
-    { path: 'rotation.z', label: 'rotation.z 角度', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
+    { path: 'scale', label: '模型整体缩放', min: 0.05, max: 2, step: 0.01, digits: 3 },
+    { path: 'position.x', label: '水平位置', min: -2, max: 2, step: 0.01 },
+    { path: 'position.y', label: '垂直位置', min: -2, max: 2, step: 0.01 },
+    { path: 'position.z', label: '前后位置', min: -2, max: 2, step: 0.01 },
+    { path: 'rotation.x', label: '俯仰角', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
+    { path: 'rotation.y', label: '水平转角', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
+    { path: 'rotation.z', label: '平面旋转', min: -180, max: 180, step: 1, suffix: '°', digits: 0 },
   ],
   brightness: [
-    { path: 'visual.laserIntensity', label: 'laserIntensity 激光', min: 0, max: 2, step: 0.01 },
-    { path: 'visual.bboIntensity', label: 'bboIntensity 晶体', min: 0, max: 2, step: 0.01 },
-    { path: 'visual.photonIntensity', label: 'photonIntensity 光子路径', min: 0, max: 2, step: 0.01 },
-    { path: 'visual.glowOpacity', label: 'glowOpacity 外发光', min: 0, max: 1, step: 0.01 },
+    { path: 'visual.laserIntensity', label: '激光亮度', min: 0, max: 2, step: 0.01 },
+    { path: 'visual.bboIntensity', label: '晶体亮度', min: 0, max: 2, step: 0.01 },
+    { path: 'visual.photonIntensity', label: '光子路径亮度', min: 0, max: 2, step: 0.01 },
+    { path: 'visual.glowOpacity', label: '外发光强度', min: 0, max: 1, step: 0.01 },
   ],
   labels: [
-    { path: 'labels.labelScale', label: 'labelScale 标签大小', min: 0.3, max: 2, step: 0.05 },
-    { path: 'labels.labelOffset.x', label: 'labelOffsetX', min: -1, max: 1, step: 0.01 },
-    { path: 'labels.labelOffset.y', label: 'labelOffsetY', min: -1, max: 1, step: 0.01 },
-    { path: 'labels.labelOffset.z', label: 'labelOffsetZ', min: -1, max: 1, step: 0.01 },
+    { path: 'labels.labelScale', label: '标签大小', min: 0.3, max: 2, step: 0.05 },
+    { path: 'labels.labelOffset.x', label: '标签水平偏移', min: -1, max: 1, step: 0.01 },
+    { path: 'labels.labelOffset.y', label: '标签垂直偏移', min: -1, max: 1, step: 0.01 },
+    { path: 'labels.labelOffset.z', label: '标签前后偏移', min: -1, max: 1, step: 0.01 },
   ],
 };
 
@@ -107,8 +107,8 @@ export function createCalibrationUi({
 
   const header = createElement('div', 'calibration-panel__header');
   const titleWrap = createElement('div');
-  titleWrap.append(createElement('p', 'calibration-panel__kicker', 'Realtime Calibration'));
-  titleWrap.append(createElement('h3', '', 'AR 实时校准'));
+  titleWrap.append(createElement('p', 'calibration-panel__kicker', 'AR Calibration'));
+  titleWrap.append(createElement('h3', '', 'AR 校准工具'));
   const headerActions = createElement('div', 'calibration-panel__header-actions');
   const expandButton = createElement('button', 'calibration-panel__mini-action', '展开');
   const closeButton = createElement('button', 'calibration-panel__close', '×');
@@ -123,7 +123,7 @@ export function createCalibrationUi({
   panel.append(createElement(
     'p',
     'calibration-panel__hint',
-    '滑块会实时生效，不需要刷新页面或重新识别。角度以 degree 显示，内部自动转为 Three.js radians。',
+    '滑块会实时生效，不需要刷新页面或重新识别。建议在识别图稳定后少量微调。',
   ));
 
   const tabBar = createElement('div', 'calibration-tabs');
@@ -290,7 +290,7 @@ export function createCalibrationUi({
     const panelElement = createElement('section', 'calibration-tabpanel');
     panelElement.dataset.panel = 'labels';
     const switchRow = createElement('label', 'calibration-switch-row');
-    const switchText = createElement('span', 'calibration-row__label', 'showLabels 显示标签');
+    const switchText = createElement('span', 'calibration-row__label', '显示器件标签');
     const switchInput = document.createElement('input');
     switchInput.type = 'checkbox';
     switchInput.addEventListener('change', () => {
@@ -322,7 +322,7 @@ export function createCalibrationUi({
     currentCalibration = runtimeToCalibrationConfig(currentRuntimeConfig);
     emitRealtimeChange();
   });
-  const copyButton = createButton('复制当前 JSON', async () => {
+  const copyButton = createButton('导出校准配置', async () => {
     const text = formatCalibrationJson(currentCalibration);
     code.textContent = text;
     fallbackTextarea.value = text;
@@ -343,7 +343,7 @@ export function createCalibrationUi({
   const fallbackTextarea = document.createElement('textarea');
   fallbackTextarea.className = 'calibration-copy-fallback';
   fallbackTextarea.hidden = true;
-  fallbackTextarea.setAttribute('aria-label', '当前 AR 校准 JSON，长按复制');
+  fallbackTextarea.setAttribute('aria-label', '当前 AR 校准配置，长按复制');
   savePanel.append(code, fallbackTextarea);
 
   const panels = [

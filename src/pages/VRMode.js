@@ -17,7 +17,7 @@ function renderShell() {
   const page = document.createElement('section');
   page.className = 'mode-page lab-mode-page immersive-master-page vr-mode-page';
   page.innerHTML = `
-    <canvas class="scene-canvas lab-scene-canvas" aria-label="量子纠缠实验室 VR 沉浸展示"></canvas>
+    <canvas class="scene-canvas lab-scene-canvas" aria-label="量子纠缠 VR 沉浸展示"></canvas>
     <div class="ambient-haze" aria-hidden="true"></div>
 
     <div class="entry-transition" data-entry-transition aria-hidden="true">
@@ -30,7 +30,7 @@ function renderShell() {
     <div class="loading-screen" data-loading aria-busy="true">
       <div class="loader-core" aria-hidden="true"><span></span><span></span><span></span></div>
       <p class="loading-eyebrow">Loading GLB</p>
-      <h1>正在进入量子纠缠实验室</h1>
+      <h1>正在进入量子纠缠 VR 沉浸展示</h1>
       <div class="loading-track"><i data-loading-bar></i></div>
       <p class="loading-detail" data-loading-detail>正在准备模型与第一人称视角</p>
       <button class="retry-button" type="button" data-retry hidden>重新加载</button>
@@ -40,7 +40,7 @@ function renderShell() {
       <header class="lab-header">
         <div class="lab-identity">
           <p>QUANTUM</p>
-          <h1>量子纠缠实验室</h1>
+          <h1>量子纠缠 VR 沉浸展示</h1>
         </div>
         <div class="lab-header-actions">
           <button class="lab-back-button" type="button" data-back>返回首页</button>
@@ -86,7 +86,7 @@ function renderShell() {
       <article class="spatial-panel" data-spatial-panel aria-hidden="true">
         <p data-spatial-kicker>沉浸提示</p>
         <h2 data-spatial-title>第一人称观察</h2>
-        <p data-spatial-body>手机沉浸支持手指拖动和体感；可随时切回自由查看。</p>
+        <p data-spatial-body>本模式通过沉浸式视角展示实验光路，使观众以第一人称方式观察纠缠光子产生、分析与探测过程。</p>
       </article>
 
       <div class="focus-reticle" data-focus-reticle aria-hidden="true"><span></span></div>
@@ -95,7 +95,7 @@ function renderShell() {
 
       <div class="mobile-scene-chrome" aria-label="手机端快捷操作">
         <button class="mobile-icon-button" type="button" data-mobile-back aria-label="返回首页">←</button>
-        <h1>量子纠缠实验室</h1>
+        <h1>量子纠缠 VR 沉浸展示</h1>
         <button class="mobile-icon-button" type="button" data-mobile-menu aria-expanded="false" aria-label="打开操作菜单">☰</button>
         <p class="mobile-bottom-hint">单指旋转 · 双指缩放 · 可开启体感</p>
       </div>

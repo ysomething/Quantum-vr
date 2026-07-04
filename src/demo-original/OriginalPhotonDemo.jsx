@@ -290,7 +290,7 @@ function MiniChart({ theta1, theta2, visibility }) {
 export default function OriginalPhotonDemo() {
   const [step, setStep] = useState("pump");
   const [fitModel, setFitModel] = useState(DEFAULT_CHSH_FIT_MODEL);
-  const [modelStatus, setModelStatus] = useState("使用内置拟合模型");
+  const [modelStatus, setModelStatus] = useState("使用内置校准模型");
   const [pumpPower, setPumpPower] = useState(72);
   const [alignment, setAlignment] = useState(92);
   const [compensated, setCompensated] = useState(true);
@@ -311,7 +311,7 @@ export default function OriginalPhotonDemo() {
       .then(({ model, fromNetwork }) => {
         if (cancelled) return;
         setFitModel(model);
-        setModelStatus(fromNetwork ? "已加载 Excel 拟合模型" : "使用内置拟合模型");
+        setModelStatus(fromNetwork ? "已加载实测数据校准模型" : "使用内置校准模型");
       });
     return () => {
       cancelled = true;
@@ -383,12 +383,12 @@ export default function OriginalPhotonDemo() {
         <header className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div>
             <div className="mb-3 inline-flex rounded-full bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 ring-1 ring-indigo-100">
-              量子纠缠微视频 · 可交互仪器演示稿
+              量子纠缠实验 · 交互式教学演示
             </div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">双光子纠缠实验如何运作？</h1>
-            <p className="mt-2 text-sm font-medium text-slate-500">量子纠缠微视频交互演示</p>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">双光子纠缠 Demo</h1>
+            <p className="mt-2 text-sm font-medium text-slate-500">面向贝尔不等式检验的交互演示</p>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              这个网页把真实仪器拆成六个动画环节：紫色泵浦光、BBO 中的自发参量下转换、光锥交线取光、走离补偿、偏振分析、单光子符合测量。本页计数由真实实验数据拟合模型生成，滑块改变的是模型输入参数，因此 S 和符合计数会连续变化。
+              本页面将实验光路拆解为六个动画环节：405nm 泵浦光、BBO 晶体中的自发参量下转换、光锥交线取光、走离补偿、偏振分析与单光子符合测量。计数、符合计数与 S 值由实测数据校准的 CHSH 近似模型实时生成，用于展示实验参数对贝尔不等式检验结果的影响。
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -473,7 +473,7 @@ export default function OriginalPhotonDemo() {
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">拟合模型实时预测</div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">校准模型实时预测</div>
                     <h3 className="mt-1 text-base font-bold text-slate-900">四类符合计数与 CHSH 四项 E</h3>
                   </div>
                   <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tabular-nums text-slate-700">
@@ -536,7 +536,7 @@ export default function OriginalPhotonDemo() {
             <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <span>
                 <span className="block text-sm font-semibold text-slate-800">显示统计涨落</span>
-                <span className="text-sm text-slate-500">开启后，APD 与符合计数会围绕拟合模型均值轻微跳动，S 值保持平滑估计。</span>
+                <span className="text-sm text-slate-500">开启后，APD 与符合计数会围绕校准模型均值轻微跳动，S 值保持平滑估计。</span>
               </span>
               <input type="checkbox" checked={showFluctuation} onChange={(e) => setShowFluctuation(e.target.checked)} className="h-6 w-6 accent-slate-900" />
             </label>
@@ -544,9 +544,9 @@ export default function OriginalPhotonDemo() {
         </section>
 
         <footer className="border-t border-slate-200 px-2 pb-2 pt-5 text-center text-xs leading-6 text-slate-500 sm:text-sm">
-          <p className="font-medium text-slate-600">量子纠缠微视频交互演示</p>
+          <p className="font-medium text-slate-600">量子纠缠交互实验演示</p>
           <p>双光子量子纠缠实验交互演示网站</p>
-          <p>仅用于课程展示、物理实验微视频制作与非商业教学交流。</p>
+          <p>用于课程展示、物理实验创新展示与非商业教学交流。</p>
         </footer>
       </div>
     </div>

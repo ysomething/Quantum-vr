@@ -19,16 +19,16 @@ import { createCalibrationUi } from './ar/calibrationUi.js';
 import { createARPerformanceMonitor } from './ar/arPerformance.js';
 
 const STATUS_TEXT = {
-  idle: '等待开始扫描',
-  checkingCamera: '正在检查摄像头权限',
-  loadingTarget: '正在加载识别图',
-  starting: '正在启动 AR',
-  scanning: '摄像头已启动，请对准识别图',
-  found: '识别成功：实验室已启动。',
-  lost: '请重新对准识别图。',
-  targetError: '识别文件加载失败。',
-  insecureContext: '当前环境可能无法启动摄像头。请使用 HTTPS 链接访问，或部署到 GitHub Pages 后再扫码体验。',
-  cameraError: '摄像头启动失败。请检查微信摄像头权限，或点击右上角使用系统浏览器打开。',
+  idle: '等待扫描',
+  checkingCamera: '正在启动摄像头',
+  loadingTarget: '请将镜头对准识别图',
+  starting: '正在启动摄像头',
+  scanning: '请将镜头对准识别图',
+  found: '识别成功，实验装置已加载',
+  lost: '识别丢失，请重新对准识别图',
+  targetError: '识别图加载失败，请重新进入页面',
+  insecureContext: '摄像头需要安全访问环境，请使用 HTTPS 链接或系统浏览器打开。',
+  cameraError: '摄像头启动失败，请检查浏览器权限或切换至系统浏览器',
   modelError: '3D 模型加载失败。',
 };
 
@@ -82,7 +82,7 @@ function renderShell() {
       <div class="ar-start-card">
         <p class="eyebrow">WeChat WebAR</p>
         <h1>量子纠缠 AR 实验室</h1>
-        <p>请允许摄像头权限，并将镜头对准识别图。模型会在图片平面上浮现，支持低亮度和现场校准。</p>
+        <p>请允许摄像头权限，并将镜头对准识别图。识别成功后，动态实验装置将叠加在真实环境中。</p>
         <div class="ar-start-actions">
           <button class="primary-button" type="button" data-start-scan>开始扫描</button>
           <button class="secondary-button" type="button" data-open-target>查看识别图</button>
@@ -90,7 +90,7 @@ function renderShell() {
           <button class="ghost-button" type="button" data-back-start>返回首页</button>
         </div>
         <p class="ar-wechat-hint">${isWeChat() ? '当前为微信环境：如无法启动摄像头，请尝试右上角用系统浏览器打开。' : '电脑端可预览页面，正式扫码建议使用手机微信或系统浏览器。'}</p>
-        <p class="ar-wechat-hint">${isSecureLikeContext() ? '当前页面满足摄像头安全上下文要求。' : '摄像头通常需要 HTTPS、localhost 或局域网安全配置。'}</p>
+        <p class="ar-wechat-hint">${isSecureLikeContext() ? '当前页面可申请摄像头权限。' : '摄像头通常需要 HTTPS、localhost 或局域网安全配置。'}</p>
         <p class="ar-security-warning">${isSecureLikeContext() ? '' : '当前环境可能无法调用摄像头，正式展示请使用 HTTPS 链接。'}</p>
         <p class="ar-debug-status" data-ar-debug-status>状态：${STATUS_TEXT.idle}</p>
       </div>
@@ -180,7 +180,7 @@ function renderShell() {
           <li>点击“开始扫描”后再允许摄像头权限。</li>
           <li>手机尽量正对识别图，避免反光、摩尔纹和过暗环境。</li>
           <li>如果画面太亮，打开“低亮度模式”。</li>
-          <li>如果模型偏移，点击“校准”，用滑块微调 scale、position 和 rotation。</li>
+          <li>如果装置位置或角度需要调整，点击“校准模式”，用滑块微调画面中的模型姿态。</li>
         </ul>
       </div>
     </div>
@@ -589,7 +589,7 @@ export async function mount(app, { navigate }) {
     setState(page, 'checkingCamera');
     setLoading(
       page,
-      '正在检查摄像头权限',
+      '正在启动摄像头',
       isWeChat() ? '正在请求摄像头权限，请在弹窗中选择允许。' : '正在请求摄像头权限，请在浏览器弹窗中选择允许。',
       0.08,
     );
@@ -613,7 +613,7 @@ export async function mount(app, { navigate }) {
       }
 
       setState(page, 'starting');
-      setLoading(page, '正在启动 AR', '摄像头权限已确认，正在启动图像识别。', 0.24);
+      setLoading(page, '正在启动摄像头', '摄像头权限已确认，正在启动图像识别。', 0.24);
       session = createARSession({
         container: by(page, '#ar-container'),
         imageTargetSrc: AR_CONFIG.assets.imageTargetSrc,
@@ -634,7 +634,7 @@ export async function mount(app, { navigate }) {
 
       await session.start();
       setState(page, 'scanning');
-      setLoading(page, '加载模型', '摄像头已启动，正在加载 GLB。', 0.68);
+      setLoading(page, '加载 3D 模型', '正在加载三维实验装置。', 0.68);
 
       model = await modelPromise;
       model.applyModelConfig(runtimeConfig.model);
@@ -738,7 +738,7 @@ export async function mount(app, { navigate }) {
       runtimeConfig = cloneARConfig(nextConfig);
       saveARConfig(runtimeConfig);
       applyRuntimeConfig();
-      showToast(page, '校准参数已保存到本机 localStorage。', 1800);
+      showToast(page, '校准参数已保存到本机。', 1800);
     },
     onReset() {
       resetSavedARConfig();

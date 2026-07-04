@@ -4,7 +4,7 @@
 
 ## 当前文件
 
-- `target-source.png`：临时测试识别图。后续可以替换成正式海报图。
+- `target-source.png`：当前识别图源文件。正式展示时可以替换为高质量海报图。
 - `target.mind`：MindAR 编译后的识别文件。网页运行时会加载它。
 
 ## 识别图要求
@@ -30,9 +30,9 @@
 6. 将下载后的文件放到 `public/targets/target.mind`。
 7. 重新运行 `npm run dev -- --host 0.0.0.0` 或重新部署。
 
-## 临时占位图说明
+## 当前识别图说明
 
-如果没有正式海报，本项目提供的 `target-source.png` 仅用于调试，内容包含：
+项目提供的 `target-source.png` 可用于 AR 识别演示，内容包含：
 
 - 量子纠缠实验室
 - 405nm 激光
