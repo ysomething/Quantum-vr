@@ -33,7 +33,7 @@ https://github.com/ysomething/quantum-entanglement-demo
 public/embedded-demo
 ```
 
-主项目通过 iframe 嵌入子应用，不把 demo 的 React / Tailwind / Three.js 依赖混入当前 Three.js / VR / AR 主项目，以避免依赖冲突、CSS 污染和路由冲突。
+电脑端主项目通过 iframe 嵌入子应用，不把 demo 的 React / Tailwind / Three.js 依赖混入当前 Three.js / VR / AR 主项目，以避免依赖冲突、CSS 污染和路由冲突。手机端不依赖 iframe，改用主项目内置的轻量原生 Demo 页面。
 
 新增主项目路由：
 
@@ -84,6 +84,34 @@ npm run deploy
 注意：demo 的 Vite `base` 必须使用 `./`，否则嵌入到 `https://ysomething.github.io/Quantum-vr/embedded-demo/` 这类 GitHub Pages 子路径时，JS/CSS 资源可能 404。
 
 命名注意：demo 第二个页面是 3D Demo，不是三光子页面。所有用户可见文案中都不要出现“三光子”，统一写作“3D Demo”。
+
+## Demo 手机端适配说明
+
+原 demo 仓库：
+
+```txt
+https://github.com/ysomething/quantum-entanglement-demo
+```
+
+电脑端仍可使用 `public/embedded-demo/index.html` 的 iframe 版本，方便保留原 demo 的完整桌面交互。
+
+手机端因为部分手机浏览器或微信内嵌环境下 iframe 子应用可能出现白屏，`#/demo/photon` 和 `#/demo/three` 会直接切换为主项目内置的移动端原生 Demo 页面，不再渲染 iframe。
+
+新增手机端页面：
+
+- `MobilePhotonDemoPage`
+- `Mobile3DDemoPage`
+
+路由保持不变：
+
+```txt
+#/demo/photon
+#/demo/three
+```
+
+`#/demo/photon` 在手机端展示双光子纠缠光路、偏振角控制、符合计数和 S 值变化；`#/demo/three` 在手机端展示轻量 3D Demo 实验台、视角拖动、自动旋转、标签切换和 `S > 2` 播放效果。
+
+注意：第二个 demo 是 3D Demo，不是三光子页面。用户可见文案统一写作“3D Demo”。
 
 ## 评委手机扫码体验说明
 
