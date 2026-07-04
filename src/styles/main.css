@@ -328,6 +328,100 @@ input:focus-visible {
   color: var(--muted);
 }
 
+.original-demo-page {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 1rem;
+  width: min(1460px, calc(100% - 32px));
+  min-height: 100dvh;
+  margin: 0 auto;
+  overflow-x: hidden;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.original-demo-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: rgba(5, 14, 34, 0.82);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+.original-demo-header .ghost-button {
+  white-space: nowrap;
+}
+
+.original-demo-heading h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.original-demo-heading p:not(.eyebrow) {
+  max-width: 62rem;
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.original-demo-host-shell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(120, 221, 255, 0.18);
+  border-radius: 18px;
+  background: #020617;
+  box-shadow: var(--shadow);
+}
+
+.original-demo-shadow-host {
+  min-width: 0;
+  min-height: 100%;
+}
+
+.original-demo-loading {
+  position: absolute;
+  inset: 1rem;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  gap: 0.6rem;
+  padding: 1.2rem;
+  border: 1px solid rgba(120, 221, 255, 0.18);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(5, 14, 34, 0.88), rgba(2, 8, 20, 0.8)),
+    rgba(2, 8, 20, 0.72);
+  color: var(--muted);
+  text-align: center;
+  backdrop-filter: blur(16px);
+}
+
+.original-demo-loading strong {
+  color: var(--text);
+  font-size: 1.15rem;
+}
+
+.original-demo-loading span {
+  max-width: 34rem;
+  line-height: 1.65;
+}
+
+.original-demo-loading.is-error {
+  border-color: rgba(255, 138, 138, 0.3);
+}
+
 .demo-embed-page {
   position: relative;
   z-index: 1;
@@ -1574,6 +1668,48 @@ body.is-low-brightness .ar-topbar {
       max(0.75rem, env(safe-area-inset-right))
       max(0.75rem, env(safe-area-inset-bottom))
       max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .original-demo-page {
+    width: 100%;
+    gap: 0.72rem;
+    padding:
+      max(0.75rem, env(safe-area-inset-top))
+      max(0.75rem, env(safe-area-inset-right))
+      max(0.75rem, env(safe-area-inset-bottom))
+      max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .original-demo-header {
+    grid-template-columns: 1fr;
+    gap: 0.68rem;
+    padding: 0.82rem;
+    border-radius: 18px;
+  }
+
+  .original-demo-header .ghost-button {
+    justify-self: start;
+    min-height: 38px;
+    padding: 0.58rem 0.82rem;
+  }
+
+  .original-demo-heading .eyebrow {
+    margin-bottom: 0.35rem;
+    font-size: 0.62rem;
+  }
+
+  .original-demo-heading h1 {
+    font-size: 1.22rem;
+  }
+
+  .original-demo-heading p:not(.eyebrow) {
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .original-demo-host-shell {
+    border-radius: 14px;
   }
 
   .demo-embed-header {

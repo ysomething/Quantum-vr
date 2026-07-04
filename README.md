@@ -19,21 +19,27 @@ D:\code\finally\quantum-entanglement-interactive-showcase
 
 二维码建议始终指向首页，而不是直接指向某一个模式页面。这样评委扫码后可以先看到模式选择，并在 AR 摄像头权限失败时快速切到 3D 展示模式。
 
-## Demo 子应用集成说明
+## Demo 集成说明
 
-集成来源：
+原 demo 来源：
 
 ```txt
 https://github.com/ysomething/quantum-entanglement-demo
 ```
 
-当前项目将该 demo 作为静态子应用构建后复制到：
+当前项目已经把原版 2D Demo 和 3D Demo 做成源码级迁移，主要文件位于：
 
 ```txt
-public/embedded-demo
+src/demo-original
 ```
 
-电脑端主项目通过 iframe 嵌入子应用，不把 demo 的 React / Tailwind / Three.js 依赖混入当前 Three.js / VR / AR 主项目，以避免依赖冲突、CSS 污染和路由冲突。手机端不依赖 iframe，改用主项目内置的轻量原生 Demo 页面。
+迁移方式：
+
+- `OriginalPhotonDemo`：保留原版双光子纠缠 2D 光路、参数控制、符合计数、S 值估计和讲解脚本区域。
+- `Original3DDemo`：保留原版 Three.js 3D 实验台、OrbitControls、参数面板、实时计数和光子动画。
+- `originalDemoPage`：在主项目 demo 路由里创建 Shadow DOM，把原版 Tailwind 编译 CSS 注入 shadow root，避免污染 `#/3d`、`#/vr`、`#/ar` 的按钮、面板、canvas 和全局样式。
+
+此前 iframe 在部分手机浏览器或微信内嵌环境下可能白屏，因此现在默认不再依赖 iframe，而是直接渲染原版 demo 组件。`public/embedded-demo` 只作为历史静态构建保留，不再作为默认入口。
 
 新增主项目路由：
 
@@ -47,71 +53,31 @@ public/embedded-demo
 - 双光子纠缠 Demo
 - 3D Demo
 
-更新 demo 子应用的方法：
+更新原版 demo 源码参考的方法：
 
 ```bash
 git clone https://github.com/ysomething/quantum-entanglement-demo.git D:\code\finally\_external\quantum-entanglement-demo
 cd D:\code\finally\_external\quantum-entanglement-demo
-npm install
-npm run build
+git pull --ff-only
 ```
 
-如果本地 clone 已存在，可在该目录中执行 `git pull --ff-only` 后重新构建。构建前需确认 demo 的 Vite `base` 使用相对路径：
+如需同步上游改动，应对照更新 `src/demo-original` 里的源码与 `original-demo.css`。主项目依赖保持克制：运行时只新增 `react`、`react-dom`，继续复用当前主项目已有的 `three`，避免升级 Three.js 影响现有 3D / VR / AR。
 
-```js
-base: './'
-```
+手机端适配说明：
 
-然后清空并复制：
+- `#/demo/photon` 和 `#/demo/three` 在手机端仍然直接渲染原版组件，不使用 iframe。
+- 原版样式、颜色、布局和控件尽量保留，只补充 `max-width: 768px` 下的宽度、滚动、按钮尺寸、安全区和 3D 视野适配。
+- 2D Demo 的大光路图在小屏中允许图区域局部横向滚动，整体页面不横向溢出。
+- 3D Demo 竖屏可操作，并提示“建议横屏体验 3D Demo，可获得更大视野。”
 
-```txt
-D:\code\finally\_external\quantum-entanglement-demo\dist
-```
-
-到：
-
-```txt
-D:\code\finally\quantum-entanglement-interactive-showcase\public\embedded-demo
-```
-
-复制后重新构建和部署主项目：
+复制或调整原版 demo 后，重新构建和部署主项目：
 
 ```bash
 npm run build
 npm run deploy
 ```
 
-注意：demo 的 Vite `base` 必须使用 `./`，否则嵌入到 `https://ysomething.github.io/Quantum-vr/embedded-demo/` 这类 GitHub Pages 子路径时，JS/CSS 资源可能 404。
-
-命名注意：demo 第二个页面是 3D Demo，不是三光子页面。所有用户可见文案中都不要出现“三光子”，统一写作“3D Demo”。
-
-## Demo 手机端适配说明
-
-原 demo 仓库：
-
-```txt
-https://github.com/ysomething/quantum-entanglement-demo
-```
-
-电脑端仍可使用 `public/embedded-demo/index.html` 的 iframe 版本，方便保留原 demo 的完整桌面交互。
-
-手机端因为部分手机浏览器或微信内嵌环境下 iframe 子应用可能出现白屏，`#/demo/photon` 和 `#/demo/three` 会直接切换为主项目内置的移动端原生 Demo 页面，不再渲染 iframe。
-
-新增手机端页面：
-
-- `MobilePhotonDemoPage`
-- `Mobile3DDemoPage`
-
-路由保持不变：
-
-```txt
-#/demo/photon
-#/demo/three
-```
-
-`#/demo/photon` 在手机端展示双光子纠缠光路、偏振角控制、符合计数和 S 值变化；`#/demo/three` 在手机端展示轻量 3D Demo 实验台、视角拖动、自动旋转、标签切换和 `S > 2` 播放效果。
-
-注意：第二个 demo 是 3D Demo，不是三光子页面。用户可见文案统一写作“3D Demo”。
+命名注意：第二个 demo 是 3D Demo，不是三光子页面。所有用户可见文案中都不要出现“三光子”，统一写作“3D Demo”。
 
 ## 评委手机扫码体验说明
 

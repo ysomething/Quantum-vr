@@ -1,16 +1,9 @@
-import { isMobile } from '../utils/device.js';
-import { mountDemoEmbedPage } from './demoEmbedPage.js';
-import { mountMobile3DDemoPage } from './Mobile3DDemoPage.js';
+import { mountOriginalDemoPage } from './originalDemoPage.js';
 
 export async function mount(app, context) {
-  if (isMobile() || window.innerWidth <= 768) {
-    return mountMobile3DDemoPage(app, context);
-  }
-
-  return mountDemoEmbedPage(app, context, {
+  return mountOriginalDemoPage(app, context, {
+    kind: 'three',
     title: '3D Demo',
-    description: '打开 demo 的 3D 交互页面，补充展示实验路径与三维演示内容。',
-    demoHash: '#/three',
-    fallbackMount: mountMobile3DDemoPage,
+    description: '源码级集成原版 Three.js 3D Demo，保留原版三维实验台、参数面板、计数和交互逻辑。',
   });
 }
