@@ -1,4 +1,4 @@
-import{C as H,M as N}from"./three.module-CbQKnzqj.js";import{c as q,V as P,a as z,b as Q,d as K,e as W,f as X,g as j,h as J,i as Y}from"./labUi-CkVMDaux.js";import{l as Z,c as tt}from"./hotspots-B40VPf0H.js";import{g as at}from"./runtimeConfig-De3KaEZK.js";import{d as et,c as ot}from"./index-CtTN2skn.js";import"./OrbitControls-CMV-iHXY.js";function nt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page vr-mode-page",o.innerHTML=`
+import{C as H,M as N}from"./three.module-CbQKnzqj.js";import{c as q,V as P,a as z,b as Q,d as K,e as W,f as X,g as j,h as J,i as Y}from"./labUi-CkVMDaux.js";import{l as Z,c as tt}from"./hotspots-B40VPf0H.js";import{g as at}from"./runtimeConfig-De3KaEZK.js";import{d as et,c as ot}from"./index-BqWHhyE3.js";import"./OrbitControls-CMV-iHXY.js";function nt(){const o=document.createElement("section");return o.className="mode-page lab-mode-page immersive-master-page vr-mode-page",o.innerHTML=`
     <canvas class="scene-canvas lab-scene-canvas" aria-label="量子纠缠 VR 沉浸展示"></canvas>
     <div class="ambient-haze" aria-hidden="true"></div>
 
